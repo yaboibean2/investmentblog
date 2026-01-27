@@ -292,6 +292,14 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
       background: #fff;
       padding: 12px;
     }
+    #weightsContainer{
+      transition: grid-template-columns 0.3s ease;
+    }
+    @media (max-width: 900px){
+      #weightsContainer{
+        grid-template-columns: 1fr !important;
+      }
+    }
     .wRow{
       display:grid;
       grid-template-columns: 110px 1fr 44px;
@@ -567,11 +575,67 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
       </p>
 
       <div class="card">
-        <h3 style="margin:0 0 6px;">Preset picker</h3>
+        <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+          <label class="tog" style="margin:0;">
+            <input id="compareMode" type="checkbox" /> 
+            <span style="font-weight:600;">Comparison Mode</span> (compare two presets side-by-side)
+          </label>
+        </div>
+
+        <h3 style="margin:0 0 6px;">Preset picker <span id="chartLabel1" style="font-weight:400; font-size:14px;">(Chart 1)</span></h3>
         <div class="presetRow" role="group" aria-label="Preset selection">
-          <button class="preset active" data-preset="safety">Safety / steady growth</button>
-          <button class="preset" data-preset="balanced">Balanced</button>
-          <button class="preset" data-preset="aggressive">Aggressive</button>
+          <button class="preset active" data-preset="safety" data-chart="1">Safety / steady growth</button>
+          <button class="preset" data-preset="balanced" data-chart="1">Balanced</button>
+          <button class="preset" data-preset="aggressive" data-chart="1">Aggressive</button>
+          <button class="preset" data-preset="custom" data-chart="1">Custom</button>
+        </div>
+
+        <div id="customBuilder" style="display:none; margin-top:16px; padding:16px; border:1px solid rgba(0,0,0,.12); border-radius:12px; background:rgba(11,79,108,.04);">
+          <h4 style="margin:0 0 12px; font-size:15px; font-weight:600;">Build Your Custom Preset</h4>
+          <p class="muted" style="margin:0 0 12px; font-size:13px;">Adjust the sliders below. Total must equal 100%.</p>
+          <div style="display:grid; gap:10px;">
+            <div>
+              <label style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                <span>Value</span><span id="customValue" style="font-weight:600;">25</span>
+              </label>
+              <input id="sliderValue" type="range" min="0" max="100" value="25" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                <span>Growth</span><span id="customGrowth" style="font-weight:600;">25</span>
+              </label>
+              <input id="sliderGrowth" type="range" min="0" max="100" value="25" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                <span>Macro</span><span id="customMacro" style="font-weight:600;">25</span>
+              </label>
+              <input id="sliderMacro" type="range" min="0" max="100" value="25" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                <span>Risk</span><span id="customRisk" style="font-weight:600;">15</span>
+              </label>
+              <input id="sliderRisk" type="range" min="0" max="100" value="15" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                <span>Sentiment</span><span id="customSentiment" style="font-weight:600;">10</span>
+              </label>
+              <input id="sliderSentiment" type="range" min="0" max="100" value="10" style="width:100%;" />
+            </div>
+          </div>
+          <div id="customTotal" style="margin-top:12px; padding:8px; border-radius:8px; text-align:center; font-weight:600;"></div>
+        </div>
+
+        <div id="preset2Picker" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid rgba(0,0,0,.10);">
+          <h3 style="margin:0 0 6px;">Preset picker <span style="font-weight:400; font-size:14px;">(Chart 2)</span></h3>
+          <div class="presetRow" role="group" aria-label="Preset selection for chart 2">
+            <button class="preset" data-preset="safety" data-chart="2">Safety / steady growth</button>
+            <button class="preset active" data-preset="balanced" data-chart="2">Balanced</button>
+            <button class="preset" data-preset="aggressive" data-chart="2">Aggressive</button>
+            <button class="preset" data-preset="custom" data-chart="2">Custom (same as above)</button>
+          </div>
         </div>
 
         <div class="controls">
@@ -598,14 +662,26 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
           </div>
         </div>
 
-        <div class="weights" aria-label="Signal weights">
-          <h3 style="margin:0 0 8px;">Signal weights (example)</h3>
-          <div class="wRow"><div class="wName">Value</div><div class="bar"><div class="fill" id="wValue"></div></div><div class="wVal" id="vValue"></div></div>
-          <div class="wRow"><div class="wName">Growth</div><div class="bar"><div class="fill" id="wGrowth"></div></div><div class="wVal" id="vGrowth"></div></div>
-          <div class="wRow"><div class="wName">Macro</div><div class="bar"><div class="fill" id="wMacro"></div></div><div class="wVal" id="vMacro"></div></div>
-          <div class="wRow"><div class="wName">Risk</div><div class="bar"><div class="fill" id="wRisk"></div></div><div class="wVal" id="vRisk"></div></div>
-          <div class="wRow"><div class="wName">Sentiment</div><div class="bar"><div class="fill" id="wSent"></div></div><div class="wVal" id="vSent"></div></div>
-          <div class="note" id="postureNote"></div>
+        <div id="weightsContainer" style="display:grid; gap:24px;">
+          <div class="weights" aria-label="Signal weights" id="weights1">
+            <h3 style="margin:0 0 8px;">Signal weights <span id="weightsLabel1">(Chart 1)</span></h3>
+            <div class="wRow"><div class="wName">Value</div><div class="bar"><div class="fill" id="wValue"></div></div><div class="wVal" id="vValue"></div></div>
+            <div class="wRow"><div class="wName">Growth</div><div class="bar"><div class="fill" id="wGrowth"></div></div><div class="wVal" id="vGrowth"></div></div>
+            <div class="wRow"><div class="wName">Macro</div><div class="bar"><div class="fill" id="wMacro"></div></div><div class="wVal" id="vMacro"></div></div>
+            <div class="wRow"><div class="wName">Risk</div><div class="bar"><div class="fill" id="wRisk"></div></div><div class="wVal" id="vRisk"></div></div>
+            <div class="wRow"><div class="wName">Sentiment</div><div class="bar"><div class="fill" id="wSent"></div></div><div class="wVal" id="vSent"></div></div>
+            <div class="note" id="postureNote"></div>
+          </div>
+
+          <div class="weights" aria-label="Signal weights for chart 2" id="weights2" style="display:none;">
+            <h3 style="margin:0 0 8px;">Signal weights <span>(Chart 2)</span></h3>
+            <div class="wRow"><div class="wName">Value</div><div class="bar"><div class="fill" id="wValue2"></div></div><div class="wVal" id="vValue2"></div></div>
+            <div class="wRow"><div class="wName">Growth</div><div class="bar"><div class="fill" id="wGrowth2"></div></div><div class="wVal" id="vGrowth2"></div></div>
+            <div class="wRow"><div class="wName">Macro</div><div class="bar"><div class="fill" id="wMacro2"></div></div><div class="wVal" id="vMacro2"></div></div>
+            <div class="wRow"><div class="wName">Risk</div><div class="bar"><div class="fill" id="wRisk2"></div></div><div class="wVal" id="vRisk2"></div></div>
+            <div class="wRow"><div class="wName">Sentiment</div><div class="bar"><div class="fill" id="wSent2"></div></div><div class="wVal" id="vSent2"></div></div>
+            <div class="note" id="postureNote2"></div>
+          </div>
         </div>
 
         <details>
@@ -704,7 +780,7 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
   setProgress();
 
   // -------------------------
-  // Presets + knobs
+  // Presets + knobs + Custom Builder + Comparison
   // -------------------------
   const presetBtns = Array.from(document.querySelectorAll("button.preset"));
   const sentCap = document.getElementById("sentCap");
@@ -712,6 +788,14 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
   const sentCapVal = document.getElementById("sentCapVal");
   const gateStrictVal = document.getElementById("gateStrictVal");
   const postureNote = document.getElementById("postureNote");
+  const postureNote2 = document.getElementById("postureNote2");
+
+  const compareModeCheckbox = document.getElementById("compareMode");
+  const preset2Picker = document.getElementById("preset2Picker");
+  const weights2Container = document.getElementById("weights2");
+  const weightsLabel1 = document.getElementById("weightsLabel1");
+  const chartLabel1 = document.getElementById("chartLabel1");
+  const customBuilder = document.getElementById("customBuilder");
 
   const fills = {
     value: document.getElementById("wValue"),
@@ -728,14 +812,40 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
     sent: document.getElementById("vSent"),
   };
 
+  const fills2 = {
+    value: document.getElementById("wValue2"),
+    growth: document.getElementById("wGrowth2"),
+    macro: document.getElementById("wMacro2"),
+    risk: document.getElementById("wRisk2"),
+    sent: document.getElementById("wSent2"),
+  };
+  const vals2 = {
+    value: document.getElementById("vValue2"),
+    growth: document.getElementById("vGrowth2"),
+    macro: document.getElementById("vMacro2"),
+    risk: document.getElementById("vRisk2"),
+    sent: document.getElementById("vSent2"),
+  };
+
+  // Custom preset sliders
+  const sliderValue = document.getElementById("sliderValue");
+  const sliderGrowth = document.getElementById("sliderGrowth");
+  const sliderMacro = document.getElementById("sliderMacro");
+  const sliderRisk = document.getElementById("sliderRisk");
+  const sliderSentiment = document.getElementById("sliderSentiment");
+  const customTotal = document.getElementById("customTotal");
+
   // Base weights (sum to 100). Sentiment will be clamped by the sentiment cap.
   const PRESETS = {
     safety:     { value: 25, growth: 18, macro: 17, risk: 30, sent: 10 },
     balanced:   { value: 22, growth: 22, macro: 18, risk: 25, sent: 13 },
     aggressive: { value: 16, growth: 30, macro: 18, risk: 22, sent: 14 },
+    custom:     { value: 25, growth: 25, macro: 25, risk: 15, sent: 10 }
   };
 
-  let activePreset = "safety";
+  let activePreset1 = "safety";
+  let activePreset2 = "balanced";
+  let isCompareMode = false;
 
   function gateLabel(v){
     if(v >= 75) return "High";
@@ -778,20 +888,17 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
     sentCapVal.textContent = Math.round(Number(sentCap.value)) + "%";
     gateStrictVal.textContent = gateLabel(Number(gateStrict.value));
 
-    const base = PRESETS[activePreset];
-    const w = normalizeWeights(base);
+    // Chart 1
+    const base1 = activePreset1 === "custom" ? getCustomWeights() : PRESETS[activePreset1];
+    const w1 = normalizeWeights(base1);
+    setBar(fills, vals, w1);
 
-    const max = 40; // just for visual scale; bars are percentage-based anyway
-    function setBar(key, value){
-      // width proportional to weight (0..100)
-      fills[key].style.width = Math.max(0, Math.min(100, value)) + "%";
-      vals[key].textContent = value + "";
+    // Chart 2 (if compare mode)
+    if(isCompareMode){
+      const base2 = activePreset2 === "custom" ? getCustomWeights() : PRESETS[activePreset2];
+      const w2 = normalizeWeights(base2);
+      setBar(fills2, vals2, w2);
     }
-    setBar("value", w.value);
-    setBar("growth", w.growth);
-    setBar("macro", w.macro);
-    setBar("risk",  w.risk);
-    setBar("sent",  w.sent);
 
     const gs = Number(gateStrict.value);
     const posture =
@@ -806,19 +913,117 @@ S&P 500 comparison points below use FRED’s **SP500** daily-close series (selec
       : "High sentiment cap: mood can move decisions more (and adds noise).";
 
     postureNote.textContent = posture + "  " + sentNote;
+    if(isCompareMode) postureNote2.textContent = posture + "  " + sentNote;
 
-    // Refresh chart (sentiment cap affects labeling and we keep things in sync)
+    // Refresh chart
     draw();
+  }
+
+  function setBar(fills, vals, w){
+    fills.value.style.width = Math.max(0, Math.min(100, w.value)) + "%";
+    fills.growth.style.width = Math.max(0, Math.min(100, w.growth)) + "%";
+    fills.macro.style.width = Math.max(0, Math.min(100, w.macro)) + "%";
+    fills.risk.style.width = Math.max(0, Math.min(100, w.risk)) + "%";
+    fills.sent.style.width = Math.max(0, Math.min(100, w.sent)) + "%";
+    vals.value.textContent = w.value + "";
+    vals.growth.textContent = w.growth + "";
+    vals.macro.textContent = w.macro + "";
+    vals.risk.textContent = w.risk + "";
+    vals.sent.textContent = w.sent + "";
+  }
+
+  function getCustomWeights(){
+    return {
+      value: Number(sliderValue.value),
+      growth: Number(sliderGrowth.value),
+      macro: Number(sliderMacro.value),
+      risk: Number(sliderRisk.value),
+      sent: Number(sliderSentiment.value)
+    };
+  }
+
+  function updateCustomTotal(){
+    const w = getCustomWeights();
+    const total = w.value + w.growth + w.macro + w.risk + w.sent;
+    document.getElementById("customValue").textContent = w.value;
+    document.getElementById("customGrowth").textContent = w.growth;
+    document.getElementById("customMacro").textContent = w.macro;
+    document.getElementById("customRisk").textContent = w.risk;
+    document.getElementById("customSentiment").textContent = w.sent;
+    
+    customTotal.textContent = `Total: ${total}%`;
+    if(total === 100){
+      customTotal.style.background = "rgba(31,122,31,.15)";
+      customTotal.style.color = "rgba(31,122,31,.85)";
+    } else {
+      customTotal.style.background = "rgba(154,91,19,.15)";
+      customTotal.style.color = "rgba(154,91,19,.85)";
+    }
+    
+    if(activePreset1 === "custom" || activePreset2 === "custom"){
+      renderWeights();
+    }
   }
 
   presetBtns.forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      presetBtns.forEach(b=>b.classList.remove("active"));
+      const chart = btn.dataset.chart || "1";
+      const preset = btn.dataset.preset;
+      
+      // Update active state for buttons in same chart group
+      presetBtns.forEach(b=>{
+        if((b.dataset.chart || "1") === chart){
+          b.classList.remove("active");
+        }
+      });
       btn.classList.add("active");
-      activePreset = btn.dataset.preset;
+      
+      if(chart === "1"){
+        activePreset1 = preset;
+        if(preset === "custom"){
+          customBuilder.style.display = "block";
+        } else if(!isCompareMode || activePreset2 !== "custom"){
+          customBuilder.style.display = "none";
+        }
+      } else {
+        activePreset2 = preset;
+        if(preset === "custom"){
+          customBuilder.style.display = "block";
+        } else if(activePreset1 !== "custom"){
+          customBuilder.style.display = "none";
+        }
+      }
+      
       renderWeights();
     });
   });
+
+  compareModeCheckbox.addEventListener("change", ()=>{
+    isCompareMode = compareModeCheckbox.checked;
+    if(isCompareMode){
+      preset2Picker.style.display = "block";
+      weights2Container.style.display = "block";
+      weightsLabel1.textContent = "(Chart 1)";
+      chartLabel1.style.display = "inline";
+      document.getElementById("weightsContainer").style.gridTemplateColumns = "1fr 1fr";
+    } else {
+      preset2Picker.style.display = "none";
+      weights2Container.style.display = "none";
+      weightsLabel1.textContent = "";
+      chartLabel1.style.display = "none";
+      document.getElementById("weightsContainer").style.gridTemplateColumns = "1fr";
+      if(activePreset1 !== "custom"){
+        customBuilder.style.display = "none";
+      }
+    }
+    renderWeights();
+  });
+
+  sliderValue.addEventListener("input", updateCustomTotal);
+  sliderGrowth.addEventListener("input", updateCustomTotal);
+  sliderMacro.addEventListener("input", updateCustomTotal);
+  sliderRisk.addEventListener("input", updateCustomTotal);
+  sliderSentiment.addEventListener("input", updateCustomTotal);
 
   sentCap.addEventListener("input", renderWeights);
   gateStrict.addEventListener("input", renderWeights);
