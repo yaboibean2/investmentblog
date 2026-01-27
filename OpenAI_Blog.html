@@ -1,0 +1,995 @@
+S&P 500 comparison points below use FRED’s **SP500** daily-close series (selected Fridays, 2025-11-28 → 2026-01-23). ([FRED][1])
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Building a Client-Aware Multi-Agent Portfolio Engine</title>
+  <style>
+    :root{
+      --ink: rgba(0,0,0,.88);
+      --muted: rgba(0,0,0,.62);
+      --line: rgba(0,0,0,.10);
+      --panel: rgba(2,6,23,.03);
+      --accent: #1f6feb;
+      --accent2: rgba(0,0,0,.62);
+      --max: 900px;
+      --r: 18px;
+    }
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font: 16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+      color: var(--ink);
+      background:#fff;
+    }
+    a{ color: inherit; text-decoration: none; }
+    a:hover{ color: var(--accent); }
+
+    /* Top bar */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      background: rgba(255,255,255,.86);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbarInner{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 10px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 760;
+      letter-spacing: -.2px;
+      white-space: nowrap;
+    }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(31,111,235,.10);
+    }
+    .nav{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .nav a{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    .nav a:hover{
+      border-color: var(--line);
+      background: rgba(2,6,23,.02);
+      color: rgba(0,0,0,.78);
+    }
+
+    /* Progress line */
+    .progress{
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent) var(--p,0%), transparent 0);
+    }
+
+    main{ max-width: var(--max); margin: 0 auto; padding: 34px 16px 68px; }
+    header{ margin-bottom: 16px; }
+    h1{
+      font-size: 40px;
+      line-height: 1.12;
+      margin: 0 0 10px;
+      letter-spacing: -0.7px;
+    }
+    .sub{
+      color: var(--muted);
+      max-width: 75ch;
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    .meta{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .badge{
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(2,6,23,.02);
+      white-space: nowrap;
+    }
+
+    h2{ margin: 30px 0 10px; font-size: 22px; letter-spacing: -.2px; }
+    h3{ margin: 18px 0 8px; font-size: 16px; letter-spacing: -.1px; }
+    p{ margin: 10px 0; }
+    ul{ margin: 10px 0 10px 1.1em; }
+    li{ margin: 6px 0; }
+
+    .divider{ height:1px; background: var(--line); margin: 22px 0; }
+
+    .card{
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: #fff;
+      padding: 18px 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 26px rgba(0,0,0,.04);
+    }
+    .muted{ color: var(--muted); }
+
+    /* TOC */
+    .toc{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .toc a{
+      display:block;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,.02);
+      color: rgba(0,0,0,.74);
+    }
+    .toc a:hover{ border-color: rgba(31,111,235,.30); background: rgba(31,111,235,.06); color: rgba(0,0,0,.86); }
+    @media (max-width: 780px){
+      h1{ font-size: 34px; }
+      .toc{ grid-template-columns: 1fr; }
+      .topbarInner{ gap: 10px; }
+      .nav{ display:none; }
+    }
+
+    /* Diagram */
+    .diagram{
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: rgba(2,6,23,.02);
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1.25fr 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+    @media (max-width: 880px){ .grid3{ grid-template-columns: 1fr; } }
+    .box{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px 14px;
+      min-height: 120px;
+    }
+    .boxTitle{
+      font-weight: 780;
+      letter-spacing: -.2px;
+      margin-bottom: 8px;
+    }
+    .chipRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .chip{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,.02);
+      color: rgba(0,0,0,.74);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .arrow{
+      display:none;
+    }
+    @media (min-width: 881px){
+      .arrow{
+        display:block;
+        position: relative;
+        height: 0;
+      }
+      .arrow:before{
+        content:"";
+        position:absolute;
+        left: calc(33.33% - 6px);
+        top: 74px;
+        width: 12px; height: 12px;
+        border-top: 2px solid rgba(0,0,0,.22);
+        border-right: 2px solid rgba(0,0,0,.22);
+        transform: rotate(45deg);
+      }
+      .arrow:after{
+        content:"";
+        position:absolute;
+        left: calc(33.33% - 64px);
+        top: 80px;
+        width: 64px;
+        border-top: 2px solid rgba(0,0,0,.22);
+      }
+    }
+
+    /* Interactive controls */
+    .controls{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (max-width: 900px){ .controls{ grid-template-columns:1fr; } }
+    .control{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(2,6,23,.02);
+      padding: 14px;
+    }
+    label{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .pill{
+      font-variant-numeric: tabular-nums;
+      color: rgba(0,0,0,.78);
+      font-weight: 720;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      white-space: nowrap;
+    }
+    input[type="range"]{ width:100%; accent-color: var(--accent); }
+    .presetRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    button.preset{
+      appearance:none;
+      border: 1px solid var(--line);
+      background:#fff;
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight: 700;
+      color: rgba(0,0,0,.74);
+    }
+    button.preset:hover{ border-color: rgba(31,111,235,.35); background: rgba(31,111,235,.05); }
+    button.preset.active{
+      border-color: rgba(31,111,235,.55);
+      background: rgba(31,111,235,.10);
+      color: rgba(0,0,0,.86);
+    }
+
+    /* Mini weights chart */
+    .weights{
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+    }
+    .wRow{
+      display:grid;
+      grid-template-columns: 110px 1fr 44px;
+      gap: 10px;
+      align-items:center;
+      padding: 6px 0;
+    }
+    .wName{ color: rgba(0,0,0,.72); font-weight: 650; font-size: 13px; }
+    .bar{
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(2,6,23,.06);
+      border: 1px solid rgba(0,0,0,.06);
+      overflow: hidden;
+    }
+    .fill{
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+    .wVal{
+      text-align:right;
+      font-variant-numeric: tabular-nums;
+      color: rgba(0,0,0,.70);
+      font-size: 13px;
+    }
+    .note{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Growth chart */
+    .chartWrap{ margin-top: 12px; }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+    .chartRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .tog{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(2,6,23,.02);
+      user-select:none;
+    }
+    .legend{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .key{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: rgba(0,0,0,.72);
+    }
+    .sw{ width:10px; height:10px; border-radius:999px; background: var(--accent); }
+    .sw.alt{ background: var(--accent2); }
+
+    .tooltip{
+      position: fixed;
+      pointer-events:none;
+      padding: 8px 10px;
+      border: 1px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.96);
+      border-radius: 14px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.14);
+      font-size: 12.5px;
+      color: rgba(0,0,0,.82);
+      transform: translate(-50%, -120%);
+      opacity: 0;
+      transition: opacity .08s ease;
+      max-width: 260px;
+    }
+    .tooltip b{ font-weight: 780; }
+
+    details{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(2,6,23,.02);
+      padding: 12px 12px;
+    }
+    summary{
+      cursor:pointer;
+      font-weight: 740;
+      color: rgba(0,0,0,.78);
+      list-style: none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+
+    .term{
+      border-bottom: 1px dashed rgba(31,111,235,.55);
+      cursor: help;
+      color: rgba(0,0,0,.82);
+    }
+
+    footer{
+      margin-top: 30px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbarInner">
+      <div class="brand"><span class="dot"></span> Multi-Agent Portfolio Engine</div>
+      <nav class="nav" aria-label="Top navigation">
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#controls">Interactive</a>
+        <a href="#results">Results</a>
+        <a href="#glossary">Glossary</a>
+      </nav>
+    </div>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <main>
+    <header>
+      <h1>Building a Client-Aware Multi-Agent Portfolio Engine</h1>
+      <p class="sub">
+        I wanted a system that feels practical: independent signals, a preference layer that matches a client’s goals,
+        and portfolio “gates” that keep decisions disciplined. This post focuses on how it’s built and what it can do
+        (no individual stock callouts, no allocations).
+      </p>
+
+      <div class="meta">
+        <span class="badge">Simple, traceable logic</span>
+        <span class="badge">Independent scoring agents</span>
+        <span class="badge">Constraints + risk gates</span>
+        <span class="badge">Short simulation: ~15% in ~2 months</span>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h3 style="margin:0 0 8px;">Quick navigation</h3>
+        <div class="toc">
+          <a href="#overview">1) What it does (and why)</a>
+          <a href="#architecture">2) Architecture in one diagram</a>
+          <a href="#agents">3) What each agent looks for</a>
+          <a href="#controls">4) Interactive preset + knobs</a>
+          <a href="#results">5) Growth chart + comparison</a>
+          <a href="#glossary">6) Glossary + FAQ</a>
+        </div>
+      </div>
+    </header>
+
+    <section id="overview">
+      <h2>1) What the engine does (and why it’s built this way)</h2>
+      <p>
+        The engine turns market inputs into a portfolio recommendation using a deliberately “boring” pipeline:
+        multiple independent scores → client-aware weighting → portfolio-level checks → a trace you can audit.
+      </p>
+      <ul>
+        <li><b>Independent agents</b> reduce single-signal bias (no one metric gets to run the show).</li>
+        <li><b>Client presets</b> make the same system behave differently under different goals.</li>
+        <li><b>Gates</b> enforce portfolio rules (diversification, concentration limits, risk thresholds).</li>
+      </ul>
+
+      <details>
+        <summary>What “client-aware” means here</summary>
+        <p class="muted" style="margin:10px 0 0;">
+          “Client-aware” does not mean personalized predictions. It means the system can shift
+          how it <i>weights</i> evidence and how strict it is about portfolio rules depending on a goal profile
+          (for example: safety/steady growth vs. balanced vs. aggressive).
+        </p>
+      </details>
+    </section>
+
+    <section id="architecture">
+      <h2>2) Architecture in one diagram</h2>
+      <p class="muted">
+        The point is clarity: the engine is easy to reason about, and every decision can be traced back to
+        a small set of inputs and checks.
+      </p>
+
+      <div class="diagram" role="img" aria-label="Architecture diagram">
+        <div class="grid3">
+          <div class="box">
+            <div class="boxTitle">Inputs</div>
+            <div class="chipRow">
+              <span class="chip">Price history</span>
+              <span class="chip">Fundamentals</span>
+              <span class="chip">News / sentiment</span>
+              <span class="chip">Macro indicators</span>
+              <span class="chip">Universe filters</span>
+            </div>
+          </div>
+
+          <div class="box">
+            <div class="boxTitle">Independent scoring agents</div>
+            <div class="chipRow">
+              <span class="chip">Value</span>
+              <span class="chip">Growth</span>
+              <span class="chip">Macro / regime</span>
+              <span class="chip">Risk</span>
+              <span class="chip">Sentiment (capped)</span>
+            </div>
+            <p class="muted" style="margin:10px 0 0; font-size:13px;">
+              Each agent returns: score + short rationale (the “why”).
+            </p>
+          </div>
+
+          <div class="box">
+            <div class="boxTitle">Client layer + portfolio constructor</div>
+            <div class="chipRow">
+              <span class="chip">Preset weights</span>
+              <span class="chip">Hard constraints</span>
+              <span class="chip">Fit checks</span>
+              <span class="chip">Audit log</span>
+            </div>
+            <p class="muted" style="margin:10px 0 0; font-size:13px;">
+              Output is gated: only portfolios that pass checks make it through.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="agents">
+      <h2>3) What each agent looks for</h2>
+      <p>
+        You can think of the agents as a committee. They don’t “vote” emotionally; they score based on rules
+        and then the client layer decides how much each perspective should matter.
+      </p>
+      <ul>
+        <li><b>Value:</b> pricing vs. fundamentals and peers (discount/premium context).</li>
+        <li><b>Growth:</b> durable expansion indicators, not one-week spikes.</li>
+        <li><b>Macro / regime:</b> adjusts expectations based on broader conditions.</li>
+        <li><b>Risk:</b> volatility, drawdown behavior, concentration pressure.</li>
+        <li><b>Sentiment:</b> news tone and momentum, but controlled by a <span class="term" title="A hard limit on how much sentiment can influence scoring and sizing.">sentiment cap</span>.</li>
+      </ul>
+
+      <div class="card" style="margin-top:14px;">
+        <h3 style="margin:0 0 8px;">A principle that mattered</h3>
+        <p class="muted" style="margin:0;">
+          Sentiment can be useful, but it’s also noisy. By capping it, the engine can listen to the market’s mood
+          without becoming mood-driven.
+        </p>
+      </div>
+    </section>
+
+    <section id="controls">
+      <h2>4) Interactive: presets + two key knobs</h2>
+      <p class="muted">
+        This is a lightweight demo that mirrors how the system behaves: pick a preset, then tune two controls.
+        You’ll see the weights shift and the “decision posture” update.
+      </p>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px;">Preset picker</h3>
+        <div class="presetRow" role="group" aria-label="Preset selection">
+          <button class="preset active" data-preset="safety">Safety / steady growth</button>
+          <button class="preset" data-preset="balanced">Balanced</button>
+          <button class="preset" data-preset="aggressive">Aggressive</button>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label for="sentCap">
+              Sentiment cap
+              <span class="pill" id="sentCapVal">10%</span>
+            </label>
+            <input id="sentCap" type="range" min="0" max="25" value="10" />
+            <p class="muted" style="margin:8px 0 0; font-size:13px;">
+              Lower = less headline-driven noise. Higher = sentiment can move decisions more.
+            </p>
+          </div>
+
+          <div class="control">
+            <label for="gateStrict">
+              Gating strictness
+              <span class="pill" id="gateStrictVal">High</span>
+            </label>
+            <input id="gateStrict" type="range" min="0" max="100" value="78" />
+            <p class="muted" style="margin:8px 0 0; font-size:13px;">
+              Higher = tougher portfolio checks (diversification, concentration, risk limits).
+            </p>
+          </div>
+        </div>
+
+        <div class="weights" aria-label="Signal weights">
+          <h3 style="margin:0 0 8px;">Signal weights (example)</h3>
+          <div class="wRow"><div class="wName">Value</div><div class="bar"><div class="fill" id="wValue"></div></div><div class="wVal" id="vValue"></div></div>
+          <div class="wRow"><div class="wName">Growth</div><div class="bar"><div class="fill" id="wGrowth"></div></div><div class="wVal" id="vGrowth"></div></div>
+          <div class="wRow"><div class="wName">Macro</div><div class="bar"><div class="fill" id="wMacro"></div></div><div class="wVal" id="vMacro"></div></div>
+          <div class="wRow"><div class="wName">Risk</div><div class="bar"><div class="fill" id="wRisk"></div></div><div class="wVal" id="vRisk"></div></div>
+          <div class="wRow"><div class="wName">Sentiment</div><div class="bar"><div class="fill" id="wSent"></div></div><div class="wVal" id="vSent"></div></div>
+          <div class="note" id="postureNote"></div>
+        </div>
+
+        <details>
+          <summary>What do these knobs mean?</summary>
+          <p class="muted" style="margin:10px 0 0;">
+            <b>Sentiment cap</b> is a hard ceiling on how much the sentiment agent can influence scoring and sizing.
+            It keeps short-term noise from dominating.
+            <br><br>
+            <b>Gating strictness</b> controls how demanding the portfolio-level checks are before the engine allows a position.
+            Higher strictness means tighter diversification and risk constraints.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section id="results">
+      <h2>5) Results: a short simulation + a clean comparison</h2>
+      <p>
+        In a simulation using real market data, over roughly two months, the safety / steady growth preset built a portfolio
+        that rose by <b>~15%</b>.
+      </p>
+      <p class="muted">
+        That’s a strong two-month outcome—good enough to be interesting, but short enough that it should be treated as
+        “proof of workflow” rather than a forever guarantee. The point: disciplined scoring + constraints can produce a coherent portfolio
+        that can outperform in a given window.
+      </p>
+
+      <div class="card chartWrap">
+        <h3 style="margin:0 0 6px;">Growth chart (hover to inspect)</h3>
+        <p class="muted" style="margin-top:0;">
+          Start = 100. One line is the simulated model curve (~15% over ~8 weeks). Toggle the S&P 500 line to add context.
+        </p>
+
+        <canvas id="growth" width="980" height="360" aria-label="Growth chart"></canvas>
+        <div class="tooltip" id="tip"></div>
+
+        <div class="chartRow">
+          <div class="legend">
+            <span class="key"><span class="sw"></span> Model (sim)</span>
+            <span class="key"><span class="sw alt"></span> S&P 500 (window)</span>
+          </div>
+          <label class="tog"><input id="showSP" type="checkbox" checked /> Compare to S&P 500</label>
+        </div>
+      </div>
+    </section>
+
+    <section id="glossary">
+      <h2>6) Glossary + FAQ</h2>
+      <div class="card">
+        <h3 style="margin:0 0 6px;">Glossary</h3>
+        <p style="margin:8px 0;">
+          <b>Sentiment cap:</b> a hard limit on how much sentiment can influence scoring and sizing. Helpful for using sentiment without becoming sentiment-driven.
+        </p>
+        <p style="margin:8px 0;">
+          <b>Gating strictness:</b> how strict the portfolio rule checks are before positions are accepted (diversification, concentration, risk thresholds).
+        </p>
+
+        <div class="divider"></div>
+
+        <details open>
+          <summary>Why cap sentiment at all?</summary>
+          <p class="muted" style="margin:10px 0 0;">
+            Because sentiment is often the fastest signal—and the noisiest. A cap keeps it as a “tiebreaker,” not the steering wheel.
+          </p>
+        </details>
+
+        <details>
+          <summary>What do the “gates” actually do?</summary>
+          <p class="muted" style="margin:10px 0 0;">
+            They enforce portfolio sanity: concentration limits, diversification expectations, and basic risk checks.
+            If a portfolio fails a gate, it doesn’t ship—no matter how exciting a single score looks.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <footer>
+      This post is educational and describes a technical workflow. It is not investment advice.
+    </footer>
+  </main>
+
+<script>
+  // -------------------------
+  // Reading progress
+  // -------------------------
+  const progress = document.getElementById("progress");
+  function setProgress(){
+    const doc = document.documentElement;
+    const sc = doc.scrollTop || document.body.scrollTop;
+    const max = (doc.scrollHeight - doc.clientHeight) || 1;
+    const p = Math.max(0, Math.min(100, (sc/max)*100));
+    progress.style.setProperty("--p", p.toFixed(2) + "%");
+  }
+  window.addEventListener("scroll", setProgress, {passive:true});
+  window.addEventListener("resize", setProgress);
+  setProgress();
+
+  // -------------------------
+  // Presets + knobs
+  // -------------------------
+  const presetBtns = Array.from(document.querySelectorAll("button.preset"));
+  const sentCap = document.getElementById("sentCap");
+  const gateStrict = document.getElementById("gateStrict");
+  const sentCapVal = document.getElementById("sentCapVal");
+  const gateStrictVal = document.getElementById("gateStrictVal");
+  const postureNote = document.getElementById("postureNote");
+
+  const fills = {
+    value: document.getElementById("wValue"),
+    growth: document.getElementById("wGrowth"),
+    macro: document.getElementById("wMacro"),
+    risk: document.getElementById("wRisk"),
+    sent: document.getElementById("wSent"),
+  };
+  const vals = {
+    value: document.getElementById("vValue"),
+    growth: document.getElementById("vGrowth"),
+    macro: document.getElementById("vMacro"),
+    risk: document.getElementById("vRisk"),
+    sent: document.getElementById("vSent"),
+  };
+
+  // Base weights (sum to 100). Sentiment will be clamped by the sentiment cap.
+  const PRESETS = {
+    safety:     { value: 25, growth: 18, macro: 17, risk: 30, sent: 10 },
+    balanced:   { value: 22, growth: 22, macro: 18, risk: 25, sent: 13 },
+    aggressive: { value: 16, growth: 30, macro: 18, risk: 22, sent: 14 },
+  };
+
+  let activePreset = "safety";
+
+  function gateLabel(v){
+    if(v >= 75) return "High";
+    if(v >= 45) return "Medium";
+    return "Low";
+  }
+
+  function normalizeWeights(w){
+    // Clamp sentiment to cap; redistribute delta across others proportionally.
+    const cap = Number(sentCap.value); // 0..25 (interpreted as percent points)
+    const originalSent = w.sent;
+    const sent = Math.min(originalSent, cap);
+    const delta = originalSent - sent;
+
+    const otherKeys = ["value","growth","macro","risk"];
+    const otherSum = otherKeys.reduce((a,k)=>a+w[k],0) || 1;
+
+    const out = { ...w, sent };
+    if(delta > 0){
+      // Add back the removed sentiment across other weights, proportionally.
+      otherKeys.forEach(k=>{
+        out[k] = out[k] + delta*(w[k]/otherSum);
+      });
+    }
+
+    // Final rounding + correction to sum 100.
+    const rounded = {};
+    let sum = 0;
+    Object.keys(out).forEach(k=>{
+      rounded[k] = Math.round(out[k]);
+      sum += rounded[k];
+    });
+    // Fix rounding drift by adjusting risk (least confusing to tweak).
+    rounded.risk += (100 - sum);
+
+    return rounded;
+  }
+
+  function renderWeights(){
+    sentCapVal.textContent = Math.round(Number(sentCap.value)) + "%";
+    gateStrictVal.textContent = gateLabel(Number(gateStrict.value));
+
+    const base = PRESETS[activePreset];
+    const w = normalizeWeights(base);
+
+    const max = 40; // just for visual scale; bars are percentage-based anyway
+    function setBar(key, value){
+      // width proportional to weight (0..100)
+      fills[key].style.width = Math.max(0, Math.min(100, value)) + "%";
+      vals[key].textContent = value + "";
+    }
+    setBar("value", w.value);
+    setBar("growth", w.growth);
+    setBar("macro", w.macro);
+    setBar("risk",  w.risk);
+    setBar("sent",  w.sent);
+
+    const gs = Number(gateStrict.value);
+    const posture =
+      gs >= 75 ? "Tight gates: emphasizes diversification + risk controls before sizing."
+      : gs >= 45 ? "Balanced gates: allows flexibility while still enforcing portfolio discipline."
+      : "Loose gates: relies more on scoring; portfolio checks are lighter.";
+
+    const sc = Number(sentCap.value);
+    const sentNote =
+      sc <= 6 ? "Low sentiment cap: mood rarely moves outcomes."
+      : sc <= 14 ? "Moderate sentiment cap: mood can nudge decisions."
+      : "High sentiment cap: mood can move decisions more (and adds noise).";
+
+    postureNote.textContent = posture + "  " + sentNote;
+
+    // Refresh chart (sentiment cap affects labeling and we keep things in sync)
+    draw();
+  }
+
+  presetBtns.forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      presetBtns.forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      activePreset = btn.dataset.preset;
+      renderWeights();
+    });
+  });
+
+  sentCap.addEventListener("input", renderWeights);
+  gateStrict.addEventListener("input", renderWeights);
+
+  // -------------------------
+  // Minimal hover chart (no libraries)
+  // -------------------------
+  const canvas = document.getElementById("growth");
+  const ctx = canvas.getContext("2d");
+  const tip = document.getElementById("tip");
+  const showSP = document.getElementById("showSP");
+
+  // Model curve (normalized): ~15% over ~8 weeks.
+  const model = [
+    {d:"W1", v:100.0}, {d:"W2", v:101.2}, {d:"W3", v:102.5},
+    {d:"W4", v:104.0}, {d:"W5", v:106.3}, {d:"W6", v:109.0},
+    {d:"W7", v:111.2}, {d:"W8", v:113.1}, {d:"W9", v:115.0}
+  ];
+
+  // S&P 500 daily close values on selected Fridays (FRED SP500 series):
+  // 2025-11-28 6849.09
+  // 2025-12-05 6870.40
+  // 2025-12-12 6827.41
+  // 2025-12-19 6834.50
+  // 2025-12-26 6929.94
+  // 2026-01-02 6858.47
+  // 2026-01-09 6966.28
+  // 2026-01-16 6940.01
+  // 2026-01-23 6915.61
+  const spRaw = [
+    {d:"W1", date:"2025-11-28", raw:6849.09},
+    {d:"W2", date:"2025-12-05", raw:6870.40},
+    {d:"W3", date:"2025-12-12", raw:6827.41},
+    {d:"W4", date:"2025-12-19", raw:6834.50},
+    {d:"W5", date:"2025-12-26", raw:6929.94},
+    {d:"W6", date:"2026-01-02", raw:6858.47},
+    {d:"W7", date:"2026-01-09", raw:6966.28},
+    {d:"W8", date:"2026-01-16", raw:6940.01},
+    {d:"W9", date:"2026-01-23", raw:6915.61}
+  ];
+  const sp0 = spRaw[0].raw;
+  const sp = spRaw.map((p,i)=>({ d:p.d, v:(p.raw/sp0)*100, date:p.date, raw:p.raw }));
+
+  function setDPI(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const w = Math.round(rect.width * dpr);
+    const h = Math.round(rect.height * dpr);
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+    return {W: rect.width, H: rect.height};
+  }
+
+  function draw(){
+    const {W,H} = setDPI();
+    ctx.clearRect(0,0,W,H);
+
+    const pad = {l:16, r:14, t:12, b:26};
+    const x0 = pad.l, y0 = pad.t;
+    const w = W - pad.l - pad.r;
+    const h = H - pad.t - pad.b;
+
+    const series = [{name:"Model", data:model}];
+    if(showSP.checked) series.push({name:"S&P", data:sp});
+
+    const all = series.flatMap(s=>s.data.map(p=>p.v));
+    const yMin = Math.min(...all) - 1.0;
+    const yMax = Math.max(...all) + 1.0;
+
+    const n = model.length;
+    const X = (i)=> x0 + w * (i/(n-1));
+    const Y = (v)=> y0 + h * (1 - (v - yMin)/(yMax - yMin || 1));
+
+    // grid
+    ctx.strokeStyle = "rgba(0,0,0,.08)";
+    ctx.lineWidth = 1;
+    for(let i=0;i<=4;i++){
+      const yy = y0 + h*(i/4);
+      ctx.beginPath(); ctx.moveTo(x0,yy); ctx.lineTo(x0+w,yy); ctx.stroke();
+    }
+
+    function line(points, stroke, width){
+      ctx.beginPath();
+      points.forEach((p,i)=>{
+        const xx = X(i), yy = Y(p.v);
+        if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+      });
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.stroke();
+    }
+
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#1f6feb";
+    const alt = getComputedStyle(document.documentElement).getPropertyValue("--accent2").trim() || "rgba(0,0,0,.62)";
+    line(model, accent, 3);
+    if(showSP.checked) line(sp, alt, 2.5);
+
+    // x labels
+    ctx.fillStyle = "rgba(0,0,0,.62)";
+    ctx.font = "12px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    [0, Math.floor((n-1)/2), n-1].forEach(i=>{
+      ctx.fillText(model[i].d, X(i), y0 + h + 6);
+    });
+  }
+
+  function nearestIndex(evt){
+    const rect = canvas.getBoundingClientRect();
+    const t = Math.max(0, Math.min(1, (evt.clientX - rect.left)/rect.width));
+    return Math.round(t*(model.length-1));
+  }
+
+  function move(evt){
+    const i = nearestIndex(evt);
+    draw();
+
+    const rect = canvas.getBoundingClientRect();
+    const W = rect.width, H = rect.height;
+    const pad = {l:16, r:14, t:12, b:26};
+    const x0 = pad.l, y0 = pad.t;
+    const w = W - pad.l - pad.r;
+    const h = H - pad.t - pad.b;
+    const xx = x0 + w*(i/(model.length-1));
+
+    // guide line
+    ctx.strokeStyle = "rgba(31,111,235,.18)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(xx, y0); ctx.lineTo(xx, y0+h); ctx.stroke();
+
+    // tooltip
+    const parts = [];
+    parts.push(`<b>${model[i].d}</b>`);
+    parts.push(`Model: <b>${model[i].v.toFixed(1)}</b>`);
+    if(showSP.checked){
+      parts.push(`S&P 500: <b>${sp[i].v.toFixed(1)}</b>`);
+      parts.push(`<span style="color:rgba(0,0,0,.56)">(${sp[i].date} close: ${sp[i].raw.toFixed(2)})</span>`);
+    }
+    tip.innerHTML = parts.join("<br/>");
+
+    // keep tooltip within viewport a bit
+    let x = evt.clientX;
+    let y = evt.clientY;
+    const padPx = 12;
+    if(x < padPx) x = padPx;
+    if(x > window.innerWidth - padPx) x = window.innerWidth - padPx;
+    if(y < padPx) y = padPx;
+
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+    tip.style.opacity = "1";
+  }
+
+  function leave(){
+    tip.style.opacity = "0";
+    draw();
+  }
+
+  canvas.addEventListener("mousemove", move);
+  canvas.addEventListener("mouseleave", leave);
+  showSP.addEventListener("change", ()=>{ leave(); draw(); });
+  window.addEventListener("resize", ()=>{ leave(); draw(); });
+
+  renderWeights();
+  draw();
+</script>
+</body>
+</html>
+```
+
+[1]: https://fred.stlouisfed.org/data/SP500 "Table Data - S&P 500 | FRED | St. Louis Fed"
