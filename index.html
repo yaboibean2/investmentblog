@@ -567,32 +567,6 @@
       <span class="sv-muted" style="font-size:13px;">Flexible = lighter portfolio checks. Conservative = stricter gates.</span>
     </div>
 
-    <div class="callout" id="constraintPlay">
-      <strong>Constraint reactions (interactive)</strong>
-      <p class="small" style="margin:8px 0 10px 0;">
-        Toggle a few constraints to see how the model would adapt. This isn’t a performance claim—just a transparent view of
-        how policy choices reshape what gets through the pipeline.
-      </p>
-      <div class="controlrow" aria-label="Constraint toggles">
-        <label class="pill" style="display:flex; align-items:center; gap:8px;">
-          <input id="cLiquidity" type="checkbox" /> Liquidity floor
-        </label>
-        <label class="pill" style="display:flex; align-items:center; gap:8px;">
-          <input id="cPosition" type="checkbox" /> Max position size
-        </label>
-        <label class="pill" style="display:flex; align-items:center; gap:8px;">
-          <input id="cSector" type="checkbox" /> Sector cap
-        </label>
-        <label class="pill" style="display:flex; align-items:center; gap:8px;">
-          <input id="cDrawdown" type="checkbox" /> Drawdown guardrail
-        </label>
-        <label class="pill" style="display:flex; align-items:center; gap:8px;">
-          <input id="cCorrelation" type="checkbox" /> Correlation overlap
-        </label>
-      </div>
-      <ul class="small" id="constraintResponse" style="margin:10px 0 0 18px;"></ul>
-    </div>
-
     <figure aria-label="Candidate pipeline chart">
       <div class="chartbox">
         <svg id="pipelineChart" viewBox="0 0 980 276" role="img" aria-label="A pipeline chart showing universe, eligibility filters, multi-agent scoring, and portfolio-fit gates.">
@@ -1016,7 +990,6 @@
           gateFlexible.setAttribute("aria-pressed","true");
         }
         applyGating();
-        updateConstraintResponse();
       }
 
       gateConservative.addEventListener("click", () => toggleGate("conservative"));
@@ -1024,51 +997,8 @@
       gateConservative.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("conservative"); }});
       gateFlexible.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("flexible"); }});
 
-      const constraintMap = {
-        cLiquidity: "Liquidity floor: trims the universe early; thinly traded names never reach scoring.",
-        cPosition: "Max position size: limits single-name influence; high scorers get capped and spreads increase.",
-        cSector: "Sector cap: forces diversification; even strong clusters are throttled before sizing.",
-        cDrawdown: "Drawdown guardrail: lowers risk posture; the engine favors stability over marginal upside.",
-        cCorrelation: "Correlation overlap: removes near-duplicates; the model prefers complementary exposures."
-      };
-
-      const constraintResponse = document.getElementById("constraintResponse");
-      const constraintInputs = Object.keys(constraintMap)
-        .map(id => document.getElementById(id))
-        .filter(Boolean);
-
-      function updateConstraintResponse(){
-        const active = constraintInputs.filter(i => i.checked).map(i => constraintMap[i.id]);
-        const gateLine = gatingMode === "conservative"
-          ? "Conservative gates amplify these effects by tightening portfolio-fit checks."
-          : "Flexible gates keep these effects light, letting more candidates survive to sizing.";
-
-        constraintResponse.innerHTML = "";
-        if(active.length === 0){
-          const li = document.createElement("li");
-          li.textContent = "Select one or two constraints to see how the model reacts.";
-          constraintResponse.appendChild(li);
-          const li2 = document.createElement("li");
-          li2.textContent = gateLine;
-          constraintResponse.appendChild(li2);
-          return;
-        }
-
-        active.forEach(text => {
-          const li = document.createElement("li");
-          li.textContent = text;
-          constraintResponse.appendChild(li);
-        });
-        const li = document.createElement("li");
-        li.textContent = gateLine;
-        constraintResponse.appendChild(li);
-      }
-
-      constraintInputs.forEach(i => i.addEventListener("change", updateConstraintResponse));
-
       renderWeights();
       applyGating();
-      updateConstraintResponse();
     })();
 
     (function(){
