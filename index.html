@@ -210,42 +210,6 @@
       font-weight: 600;
     }
 
-    .scenarioRow{
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 10px 0 8px 0;
-    }
-    .scenarioStats{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .scenarioStat{
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: rgba(0,0,0,.02);
-      font-size: 13px;
-    }
-    .scenarioStat strong{
-      display:block;
-      font-size: 16px;
-      margin-top: 2px;
-    }
-    .scenarioChart{
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-      margin-top: 12px;
-    }
-    .scenarioChart svg{ display:block; width:100%; height:auto; }
-    @media (max-width: 720px){
-      .scenarioStats{ grid-template-columns: 1fr; }
-    }
-
     .controlrow{
       display:flex;
       flex-wrap: wrap;
@@ -541,35 +505,6 @@
             Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises.
             Cons: can lag fast, momentum-driven rallies.
           </p>
-        </div>
-
-        <div class="callout" id="scenarioSim">
-          <strong>Scenario quick view</strong>
-          <p class="small" style="margin:8px 0 0 0;">
-            A small, intuitive “what-if” view. Switch scenarios to see how the same policy might feel in different regimes.
-          </p>
-
-          <div class="scenarioRow" role="group" aria-label="Scenario selector">
-            <button class="pill" id="scenarioBase" aria-pressed="true" type="button">Base case</button>
-            <button class="pill" id="scenarioBull" aria-pressed="false" type="button">Bull run</button>
-            <button class="pill" id="scenarioBear" aria-pressed="false" type="button">Risk-off</button>
-          </div>
-
-          <div class="scenarioStats" aria-live="polite">
-            <div class="scenarioStat">Expected return (8w)<strong id="scenarioReturn">+6.5%</strong></div>
-            <div class="scenarioStat">Max drawdown (8w)<strong id="scenarioDrawdown">-4.2%</strong></div>
-            <div class="scenarioStat">Volatility feel<strong id="scenarioVol">Moderate</strong></div>
-          </div>
-
-          <div class="scenarioChart" aria-label="Scenario path preview">
-            <svg viewBox="0 0 520 140" role="img" aria-label="Scenario path line chart">
-              <rect x="0" y="0" width="520" height="140" fill="white" />
-              <line x1="40" y1="100" x2="500" y2="100" stroke="rgba(0,0,0,.10)" />
-              <path id="scenarioLine" d="" fill="none" stroke="rgba(11,79,108,.85)" stroke-width="3" />
-              <text x="40" y="120" class="sv-muted" font-size="12">Week 0</text>
-              <text x="500" y="120" class="sv-muted" font-size="12" text-anchor="end">Week 8</text>
-            </svg>
-          </div>
         </div>
       </div>
 
@@ -1062,69 +997,8 @@
       gateConservative.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("conservative"); }});
       gateFlexible.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("flexible"); }});
 
-      // Scenario quick view (lightweight simulator)
-      const scenarioLine = document.getElementById("scenarioLine");
-      const scenarioReturn = document.getElementById("scenarioReturn");
-      const scenarioDrawdown = document.getElementById("scenarioDrawdown");
-      const scenarioVol = document.getElementById("scenarioVol");
-      const scenarioBtns = {
-        base: document.getElementById("scenarioBase"),
-        bull: document.getElementById("scenarioBull"),
-        bear: document.getElementById("scenarioBear")
-      };
-
-      const scenarioData = {
-        base: {
-          line: [100, 101, 101.5, 102.8, 103.2, 104.1, 105.4, 106.0, 106.5],
-          ret: "+6.5%",
-          dd: "-4.2%",
-          vol: "Moderate"
-        },
-        bull: {
-          line: [100, 102.2, 103.8, 105.5, 107.2, 109.8, 112.0, 114.2, 116.5],
-          ret: "+16.5%",
-          dd: "-2.1%",
-          vol: "Low"
-        },
-        bear: {
-          line: [100, 98.8, 97.2, 96.5, 97.0, 95.8, 96.4, 95.2, 94.5],
-          ret: "-5.5%",
-          dd: "-9.0%",
-          vol: "High"
-        }
-      };
-
-      function pathFromSeries(series){
-        const x0 = 40, y0 = 20, w = 460, h = 80;
-        const min = Math.min(...series);
-        const max = Math.max(...series);
-        const span = Math.max(1, max - min);
-        return series.map((v, i) => {
-          const x = x0 + (i / (series.length - 1)) * w;
-          const t = (v - min) / span;
-          const y = y0 + (1 - t) * h;
-          return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-        }).join(" ");
-      }
-
-      function setScenario(active){
-        Object.keys(scenarioBtns).forEach(key => {
-          scenarioBtns[key].setAttribute("aria-pressed", key === active ? "true" : "false");
-        });
-        const s = scenarioData[active];
-        scenarioLine.setAttribute("d", pathFromSeries(s.line));
-        scenarioReturn.textContent = s.ret;
-        scenarioDrawdown.textContent = s.dd;
-        scenarioVol.textContent = s.vol;
-      }
-
-      scenarioBtns.base.addEventListener("click", () => setScenario("base"));
-      scenarioBtns.bull.addEventListener("click", () => setScenario("bull"));
-      scenarioBtns.bear.addEventListener("click", () => setScenario("bear"));
-
       renderWeights();
       applyGating();
-      setScenario("base");
     })();
 
     (function(){
