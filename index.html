@@ -491,25 +491,21 @@
             <input id="sentimentCap" type="range" min="0" max="25" step="1" value="10" />
             <span class="readout" id="sentimentReadout">10</span><span class="sv-muted" style="font-size:13px;">%</span>
           </label>
-
-          <label>
-            Gating strictness
-            <span class="pill" id="gateConservative" aria-pressed="true" role="button" tabindex="0">Conservative</span>
-            <span class="pill" id="gateFlexible" aria-pressed="false" role="button" tabindex="0">Flexible</span>
-          </label>
         </div>
 
         <p class="hint">
           <strong>Sentiment cap</strong> is a hard ceiling on how much “news/attention” can influence scoring and sizing.
           Even if sentiment spikes, it can’t dominate the decision; it remains a supporting signal, not the steering wheel.<br><br>
-          <strong>Gating strictness</strong> controls how hard it is to pass portfolio-level checks
-          (overlap, concentration, volatility contribution, and sizing constraints). Conservative strictness means fewer
-          candidates make it through, but the survivors fit the risk policy more tightly.
-        </p>
-
-        <p class="hint">
           Tip: click the presets, then slide the sentiment cap. The chart updates to show how policy changes what the model listens to.
         </p>
+
+        <div class="callout" id="presetNotes">
+          <strong id="presetNotesTitle">Safety / steady growth</strong>
+          <p class="small" id="presetNotesBody" style="margin:8px 0 0 0;">
+            Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises.
+            Cons: can lag fast, momentum-driven rallies.
+          </p>
+        </div>
       </div>
 
       <figure aria-label="Preset weights bar chart">
@@ -561,6 +557,15 @@
       by excluding names with fragile data, limited liquidity, or structural constraints that make sizing unrealistic. Only after
       those basics are satisfied does multi-agent scoring become meaningful.
     </p>
+
+    <div class="controlrow" aria-label="Gating strictness controls" style="margin: 6px 0 6px 0;">
+      <label>
+        Gating strictness
+        <span class="pill" id="gateConservative" aria-pressed="false" role="button" tabindex="0">Conservative</span>
+        <span class="pill" id="gateFlexible" aria-pressed="true" role="button" tabindex="0">Flexible</span>
+      </label>
+      <span class="sv-muted" style="font-size:13px;">Flexible = lighter portfolio checks. Conservative = stricter gates.</span>
+    </div>
 
     <figure aria-label="Candidate pipeline chart">
       <div class="chartbox">
@@ -825,13 +830,15 @@
       const capLabel = document.getElementById("capLabel");
       const capSlider = document.getElementById("sentimentCap");
       const capReadout = document.getElementById("sentimentReadout");
+      const presetNotesTitle = document.getElementById("presetNotesTitle");
+      const presetNotesBody = document.getElementById("presetNotesBody");
 
       const bar2 = document.getElementById("bar2");
       const bar3 = document.getElementById("bar3");
       const bar4 = document.getElementById("bar4");
       const gateConservative = document.getElementById("gateConservative");
       const gateFlexible = document.getElementById("gateFlexible");
-      let gatingMode = "conservative";
+      let gatingMode = "flexible";
 
       const chart = {
         xStart: 128,
@@ -840,6 +847,21 @@
         barW: 58,
         gap: 18,
         categories: ["Value","Growth","Macro","Risk","Sentiment"]
+      };
+
+      const presetNotes = {
+        safety: {
+          title: "Safety / steady growth",
+          body: "Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises. Cons: can lag fast, momentum-driven rallies."
+        },
+        balanced: {
+          title: "Balanced",
+          body: "A middle path that keeps the signal stack diversified. Pros: adapts across regimes without overfitting one style. Cons: rarely leads a sharp rally or a sharp defensive move."
+        },
+        growth: {
+          title: "Growth-leaning",
+          body: "Tilts toward Growth and Sentiment to capture trends. Pros: stronger upside participation when momentum persists. Cons: more drawdown sensitivity if the regime turns." 
+        }
       };
 
       function normalizeWithCap(baseWeights, cap){
@@ -874,6 +896,12 @@
         capLabel.textContent = `Sentiment capped at ${currentCap}%`;
         capReadout.textContent = String(currentCap);
         capSlider.value = String(currentCap);
+
+        const note = presetNotes[currentPresetKey];
+        if(note){
+          presetNotesTitle.textContent = note.title;
+          presetNotesBody.textContent = note.body;
+        }
 
         barsG.innerHTML = "";
 
