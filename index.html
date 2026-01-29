@@ -337,9 +337,6 @@
       Most investing workflows fail for one of two reasons: they’re inconsistent (decisions depend on mood and memory),
       or they’re opaque (decisions depend on a “score” nobody can unpack). This project treated the problem as a system
       design challenge: make decisions <em>repeatable</em>, <em>explainable</em>, and <em>constraint-aware</em>.
-      The rest of this post leans into the “how I built it” angle—what the agents do, how the constraints are enforced,
-      and how the pipeline stays auditable without hand-tuning every output. I’ll walk through the actual scaffolding
-      decisions I made (what gets checked first, what gets scored later, and where I deliberately added guardrails).
     </p>
 
     <p>
@@ -359,10 +356,8 @@
     <h3>Start with rules, not ideas</h3>
     <p>
       The system doesn’t begin with “what looks exciting.” It begins with a rule set—an IPS-style translation of what the
-      client is actually optimizing for: steady compounding, controlled downside, and decisions that can be backed by evidence.
-      From there, the rest becomes a pipeline: input → scoring → constraints → portfolio fit → audit trail. In practice,
-      that meant building small, testable modules first (eligibility filters, then agent scoring, then portfolio gates),
-      and wiring them together only after each piece behaved the way I expected.
+      client is actually optimizing for: steady compounding, controlled downside, and decisions that can be defended.
+      From there, the rest becomes a pipeline: input → scoring → constraints → portfolio fit → audit trail.
     </p>
 
     <p>
@@ -370,12 +365,6 @@
       limit, is the data reliable?) and soft preferences (tilt toward higher-quality cash flows, avoid fragile exposure to single
       macro variables). The key is that rules are expressed in portfolio terms—weights, exposures, and risk contribution—so
       enforcement is automatic and consistent.
-    </p>
-
-    <p>
-      If you’re looking for the build story: I started by defining the portfolio constraints before any scoring logic, then
-      used those constraints to shape every downstream decision. That order forced discipline—if a signal couldn’t survive
-      the policy gate, it didn’t get a bigger voice just because it looked exciting.
     </p>
 
     <figure aria-label="System overview diagram">
@@ -386,9 +375,6 @@
               <stop offset="0" stop-color="rgba(11,79,108,.14)"></stop>
               <stop offset="1" stop-color="rgba(0,0,0,0)"></stop>
             </linearGradient>
-            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
-              <path d="M0,0 L10,5 L0,10 Z" fill="rgba(120,120,120,1)"></path>
-            </marker>
           </defs>
 
           <rect x="40" y="70" rx="14" ry="14" width="210" height="230" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
@@ -417,20 +403,25 @@
           <rect x="300" y="250" rx="12" ry="12" width="330" height="44" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
           <text x="318" y="278" class="sv-text" font-weight="650">Sentiment (deliberately capped)</text>
 
-          <rect x="710" y="70" rx="14" ry="14" width="220" height="96" fill="rgba(11,79,108,.08)" stroke="rgba(11,79,108,.28)"/>
-          <text x="728" y="106" class="sv-text" font-weight="700">Client layer</text>
-          <text x="728" y="134" class="sv-muted">• Preset weights</text>
-          <text x="728" y="158" class="sv-muted">• Hard constraints</text>
+          <rect x="680" y="70" rx="14" ry="14" width="260" height="110" fill="rgba(11,79,108,.08)" stroke="rgba(11,79,108,.28)"/>
+          <text x="700" y="108" class="sv-text" font-weight="700">Client layer</text>
+          <text x="700" y="140" class="sv-muted">• Preset weights</text>
+          <text x="700" y="166" class="sv-muted">• Hard constraints</text>
 
-          <rect x="710" y="196" rx="14" ry="14" width="220" height="90" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
-          <text x="728" y="230" class="sv-text" font-weight="700">Portfolio constructor</text>
-          <text x="728" y="256" class="sv-muted">• Fit checks</text>
-          <text x="728" y="278" class="sv-muted">• Audit log</text>
+          <rect x="680" y="196" rx="14" ry="14" width="260" height="104" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
+          <text x="700" y="232" class="sv-text" font-weight="700">Portfolio constructor</text>
+          <text x="700" y="260" class="sv-muted">• Fit checks</text>
+          <text x="700" y="286" class="sv-muted">• Audit log</text>
 
-          <g fill="none" stroke="rgba(120,120,120,1)" stroke-width="2" stroke-linecap="butt" marker-end="url(#arrowhead)">
+          <g fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2" stroke-linecap="round">
             <path d="M250 185 C265 185, 270 185, 280 185"/>
-            <path d="M650 185 C670 185, 690 118, 700 118 L708 118"/>
-            <path d="M650 185 C670 185, 690 241, 700 241 L708 241"/>
+            <path d="M650 185 C665 185, 670 135, 680 135"/>
+            <path d="M650 185 C665 185, 670 246, 680 246"/>
+          </g>
+          <g fill="rgba(0,0,0,.28)">
+            <polygon points="280,185 270,180 270,190"/>
+            <polygon points="680,135 670,130 670,140"/>
+            <polygon points="680,246 670,241 670,251"/>
           </g>
 
           <text x="40" y="336" class="sv-muted" font-size="12">
@@ -638,11 +629,6 @@
     <figure aria-label="QA loop diagram">
       <div class="chartbox">
         <svg viewBox="0 0 980 300" role="img" aria-label="A loop diagram: log run, monitor, audit triggers, diagnose driver, small adjustments, versioned.">
-          <defs>
-            <marker id="arrowhead-qa" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
-              <path d="M0,0 L10,5 L0,10 Z" fill="rgba(120,120,120,1)"></path>
-            </marker>
-          </defs>
           <rect x="0" y="0" width="980" height="300" fill="white"/>
           <text x="26" y="36" class="sv-text" font-weight="700">QA loop (structured, capped, auditable)</text>
           <text x="26" y="58" class="sv-muted" font-size="12">Improves calibration without becoming reactive or opaque</text>
@@ -670,12 +656,19 @@
             <text x="658" y="262" class="sv-muted" font-size="12">capped • versioned • reversible</text>
           </g>
 
-          <g fill="none" stroke="rgba(120,120,120,1)" stroke-width="2" stroke-linecap="butt" marker-end="url(#arrowhead-qa)">
+          <g fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2" stroke-linecap="round">
             <path d="M250 134 C270 134, 275 134, 290 134"/>
             <path d="M510 134 C530 134, 535 134, 550 134"/>
             <path d="M770 134 C790 134, 795 134, 810 134"/>
             <path d="M875 172 C875 194, 860 206, 820 206"/>
             <path d="M640 243 C430 260, 210 230, 145 172"/>
+          </g>
+          <g fill="rgba(0,0,0,.28)">
+            <polygon points="290,134 280,129 280,139"/>
+            <polygon points="550,134 540,129 540,139"/>
+            <polygon points="810,134 800,129 800,139"/>
+            <polygon points="820,206 830,201 830,211"/>
+            <polygon points="145,172 154,166 156,176"/>
           </g>
 
           <text x="26" y="292" class="sv-muted" font-size="12">
@@ -695,7 +688,7 @@
     </p>
 
     <p>
-      Simply put: <strong>15% in two months is a very strong short window</strong>.
+      Put simply: <strong>15% in two months is a very strong short window</strong>.
       It’s the kind of number that stands out—partly because short stretches can be unusually favorable (or unfavorable)
       depending on the market regime. That’s why the most honest way to read it is: the pipeline can <em>find and size</em>
       opportunities when conditions cooperate, while still obeying the safety policy.
