@@ -1,1229 +1,1394 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>A Client-Aware Multi-Agent Portfolio Builder</title>
-  <meta name="description" content="A transparent, constraint-first system that scores opportunities through independent lenses, enforces portfolio rules by design, and improves via a QA feedback loop." />
 
-  <style>
-    :root{
-      --bg: #ffffff;
-      --text: rgba(0,0,0,.84);
-      --muted: rgba(0,0,0,.62);
-      --border: rgba(0,0,0,.12);
-      --soft: rgba(0,0,0,.04);
-      --accent: #0b4f6c;
-      --accent2: #1f7a1f;
-      --warn: #9a5b13;
-      --maxw: 900px;
-      --radius: 14px;
-    }
+ <title>A Client-Aware Multi-Agent Portfolio Builder</title>
+ <meta name="description" content="A transparent, constraint-first system that scores opportunities through independent lenses, enforces portfolio rules by design, and improves via a QA feedback loop." />
 
-    html{
-      font: 400 16px/1.58 -apple-system, BlinkMacSystemFont, "Roboto", Helvetica, Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      text-size-adjust: 100%;
-      -webkit-text-size-adjust: 100%;
-    }
-    body{ margin: 0; }
-    a{ color: var(--accent); text-decoration: none; }
-    a:hover{ text-decoration: underline; }
 
-    /* Header */
-    dt-header{
-      display:block;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      height: 60px;
-      background-color: hsl(200, 60%, 15%);
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 1px 10px rgba(0,0,0,.12);
-    }
-    dt-header .content{
-      max-width: var(--maxw);
-      margin: 0 auto;
-      height: 60px;
-      padding: 0 18px;
-      box-sizing: border-box;
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      color: rgba(255,255,255,.92);
-      font-weight: 600;
-      letter-spacing: .2px;
-      white-space: nowrap;
-    }
-    .brand .dot{
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.75);
-      display:inline-block;
-    }
-    dt-header nav{
-      display:flex;
-      align-items:center;
-      gap: 14px;
-      flex-wrap: wrap;
-      justify-content:flex-end;
-    }
-    dt-header nav a{
-      font-size: 14px;
-      color: rgba(255,255,255,.78);
-      letter-spacing: .02em;
-      padding: 10px 0;
-    }
-    dt-header nav a:hover{ color: rgba(255,255,255,1); }
+ <style>
+   :root{
+     --bg: #ffffff;
+     --text: rgba(0,0,0,.84);
+     --muted: rgba(0,0,0,.62);
+     --border: rgba(0,0,0,.12);
+     --soft: rgba(0,0,0,.04);
+     --accent: #0b4f6c;
+     --accent2: #1f7a1f;
+     --warn: #9a5b13;
+     --maxw: 900px;
+     --radius: 14px;
+   }
 
-    /* Article */
-    dt-article{
-      display:block;
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 44px 18px 70px 18px;
-      box-sizing: border-box;
-    }
-    h1{
-      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
-      font-weight: 650;
-      letter-spacing: -.012em;
-      line-height: 1.10;
-      font-size: 42px;
-      margin: 0 0 12px 0;
-    }
-    h2{
-      font-size: 20px;
-      font-weight: 450;
-      color: var(--muted);
-      line-height: 1.35;
-      margin: 0 0 22px 0;
-      max-width: 46em;
-    }
-    dt-byline{
-      display:block;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 0;
-      margin: 24px 0 32px 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    dt-byline .row{
-      display:flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px 16px;
-    }
-    .k{
-      font-variant-caps: all-small-caps;
-      letter-spacing: .05em;
-      color: rgba(0,0,0,.55);
-      margin-right: 6px;
-    }
 
-    h3{
-      font-size: 22px;
-      margin: 34px 0 10px 0;
-      letter-spacing: -.01em;
-    }
-    p{ margin: 0 0 14px 0; max-width: 52em; }
-    ul{ margin: 10px 0 18px 20px; padding:0; max-width: 52em; }
-    li{ margin: 6px 0; }
+   html{
+     font: 400 16px/1.58 -apple-system, BlinkMacSystemFont, "Roboto", Helvetica, Arial, sans-serif;
+     color: var(--text);
+     background: var(--bg);
+     text-size-adjust: 100%;
+     -webkit-text-size-adjust: 100%;
+   }
+   body{ margin: 0; }
+   a{ color: var(--accent); text-decoration: none; }
+   a:hover{ text-decoration: underline; }
 
-    .callout{
-      border: 1px solid rgba(11,79,108,.22);
-      background: rgba(11,79,108,.08);
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin: 18px 0;
-      max-width: 56em;
-      box-sizing: border-box;
-    }
 
-    .two-col{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 18px;
-      align-items:start;
-    }
-    @media (max-width: 880px){
-      .two-col{ grid-template-columns: 1fr; }
-    }
+   /* Header */
+   dt-header{
+     display:block;
+     position: sticky;
+     top: 0;
+     z-index: 10;
+     height: 60px;
+     background-color: hsl(200, 60%, 15%);
+     border-bottom: 1px solid rgba(255,255,255,.10);
+     box-shadow: 0 1px 10px rgba(0,0,0,.12);
+   }
+   dt-header .content{
+     max-width: var(--maxw);
+     margin: 0 auto;
+     height: 60px;
+     padding: 0 18px;
+     box-sizing: border-box;
+     display:flex;
+     align-items:center;
+     justify-content: space-between;
+     gap: 16px;
+   }
+   .brand{
+     display:flex;
+     align-items:center;
+     gap:10px;
+     color: rgba(255,255,255,.92);
+     font-weight: 600;
+     letter-spacing: .2px;
+     white-space: nowrap;
+   }
+   .brand .dot{
+     width: 10px; height: 10px;
+     border-radius: 50%;
+     background: rgba(255,255,255,.75);
+     display:inline-block;
+   }
+   dt-header nav{
+     display:flex;
+     align-items:center;
+     gap: 14px;
+     flex-wrap: wrap;
+     justify-content:flex-end;
+   }
+   dt-header nav a{
+     font-size: 14px;
+     color: rgba(255,255,255,.78);
+     letter-spacing: .02em;
+     padding: 10px 0;
+   }
+   dt-header nav a:hover{ color: rgba(255,255,255,1); }
 
-    figure{
-      margin: 16px 0 22px 0;
-      padding: 0;
-      max-width: 56em;
-    }
 
-    /* Border wraps SVG only */
-    .chartbox{
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: linear-gradient(to bottom, rgba(0,0,0,.02), rgba(0,0,0,0));
-      overflow:hidden;
-    }
-    .chartbox svg{
-      display:block;
-      width:100%;
-      height:auto;
-    }
+   /* Article */
+   dt-article{
+     display:block;
+     max-width: var(--maxw);
+     margin: 0 auto;
+     padding: 44px 18px 70px 18px;
+     box-sizing: border-box;
+   }
+   h1{
+     font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
+     font-weight: 650;
+     letter-spacing: -.012em;
+     line-height: 1.10;
+     font-size: 42px;
+     margin: 0 0 12px 0;
+   }
+   h2{
+     font-size: 20px;
+     font-weight: 450;
+     color: var(--muted);
+     line-height: 1.35;
+     margin: 0 0 22px 0;
+     max-width: 46em;
+   }
+   dt-byline{
+     display:block;
+     border-top: 1px solid var(--border);
+     border-bottom: 1px solid var(--border);
+     padding: 12px 0;
+     margin: 24px 0 32px 0;
+     color: var(--muted);
+     font-size: 13px;
+   }
+   dt-byline .row{
+     display:flex;
+     flex-wrap: wrap;
+     align-items: baseline;
+     justify-content: space-between;
+     gap: 10px 16px;
+   }
+   .k{
+     font-variant-caps: all-small-caps;
+     letter-spacing: .05em;
+     color: rgba(0,0,0,.55);
+     margin-right: 6px;
+   }
 
-    figcaption{
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--muted);
-      max-width: 56em;
-    }
 
-    .pillbar{
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 10px 0 0 0;
-    }
-    .pill{
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.02);
-      color: rgba(0,0,0,.75);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 13px;
-      cursor: pointer;
-      user-select: none;
-      line-height: 1.1;
-    }
-    .pill[aria-pressed="true"]{
-      border-color: rgba(11,79,108,.35);
-      background: rgba(11,79,108,.10);
-      color: rgba(0,0,0,.82);
-      font-weight: 600;
-    }
+   h3{
+     font-size: 22px;
+     margin: 34px 0 10px 0;
+     letter-spacing: -.01em;
+   }
+   p{ margin: 0 0 14px 0; max-width: 52em; }
+   ul{ margin: 10px 0 18px 20px; padding:0; max-width: 52em; }
+   li{ margin: 6px 0; }
 
-    .controlrow{
-      display:flex;
-      flex-wrap: wrap;
-      gap: 10px 14px;
-      align-items:center;
-      margin: 10px 0 0 0;
-    }
-    .controlrow label{
-      font-size: 13px;
-      color: rgba(0,0,0,.72);
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: rgba(0,0,0,.02);
-    }
-    .controlrow input[type="range"]{
-      width: 160px;
-    }
-    .controlrow .readout{
-      font-variant-numeric: tabular-nums;
-      font-weight: 650;
-      color: rgba(0,0,0,.78);
-      min-width: 3ch;
-      text-align:right;
-    }
 
-    details{
-      max-width: 56em;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      background: rgba(0,0,0,.02);
-      margin: 14px 0 18px 0;
-      box-sizing: border-box;
-    }
-    summary{ cursor: pointer; font-weight: 650; color: rgba(0,0,0,.78); }
-    .small{ font-size: 13px; color: var(--muted); max-width: 56em; }
+   .callout{
+     border: 1px solid rgba(11,79,108,.22);
+     background: rgba(11,79,108,.08);
+     border-radius: 12px;
+     padding: 16px 18px;
+     margin: 18px 0;
+     max-width: 56em;
+     box-sizing: border-box;
+   }
 
-    dt-footer{
-      display:block;
-      border-top: 1px solid var(--border);
-      margin-top: 44px;
-      padding-top: 16px;
-      color: var(--muted);
-      font-size: 13px;
-      max-width: 56em;
-    }
 
-    /* SVG text colors */
-    svg text{ font-family: inherit; }
-    .sv-muted{ fill: rgba(0,0,0,.62); }
-    .sv-text{ fill: rgba(0,0,0,.84); }
-    .sv-grid{ stroke: rgba(0,0,0,.08); }
+   .two-col{
+     display:grid;
+     grid-template-columns: 1.1fr .9fr;
+     gap: 18px;
+     align-items:start;
+   }
+   @media (max-width: 880px){
+     .two-col{ grid-template-columns: 1fr; }
+   }
 
-    .hint{
-      font-size: 13px;
-      color: rgba(0,0,0,.62);
-      margin: 6px 0 0 0;
-      max-width: 56em;
-    }
 
-    /* Tooltip */
-    .chartwrap{ position: relative; }
-    .tooltip{
-      position:absolute;
-      pointer-events:none;
-      transform: translate(-50%, -110%);
-      background: rgba(255,255,255,.96);
-      border: 1px solid rgba(0,0,0,.14);
-      box-shadow: 0 10px 24px rgba(0,0,0,.10);
-      border-radius: 12px;
-      padding: 8px 10px;
-      font-size: 12px;
-      color: rgba(0,0,0,.78);
-      line-height: 1.25;
-      opacity: 0;
-      transition: opacity 120ms ease;
-      white-space: nowrap;
-    }
-    .tooltip strong{ color: rgba(0,0,0,.86); font-weight: 700; }
+   figure{
+     margin: 16px 0 22px 0;
+     padding: 0;
+     max-width: 56em;
+   }
 
-    .mini-toggle{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      margin: 10px 0 0 0;
-    }
-    .mini-toggle .pill{ display:inline-flex; align-items:center; gap:8px; }
-    .mini-toggle input{ transform: translateY(1px); }
-  </style>
+
+   /* Border wraps SVG only */
+   .chartbox{
+     border: 1px solid var(--border);
+     border-radius: var(--radius);
+     background: linear-gradient(to bottom, rgba(0,0,0,.02), rgba(0,0,0,0));
+     overflow:hidden;
+   }
+   .chartbox svg{
+     display:block;
+     width:100%;
+     height:auto;
+   }
+
+
+   figcaption{
+     margin-top: 10px;
+     font-size: 13px;
+     color: var(--muted);
+     max-width: 56em;
+   }
+
+
+   .pillbar{
+     display:flex;
+     gap: 8px;
+     flex-wrap: wrap;
+     margin: 10px 0 0 0;
+   }
+   .pill{
+     border: 1px solid var(--border);
+     background: rgba(0,0,0,.02);
+     color: rgba(0,0,0,.75);
+     border-radius: 999px;
+     padding: 6px 10px;
+     font-size: 13px;
+     cursor: pointer;
+     user-select: none;
+     line-height: 1.1;
+   }
+   .pill[aria-pressed="true"]{
+     border-color: rgba(11,79,108,.35);
+     background: rgba(11,79,108,.10);
+     color: rgba(0,0,0,.82);
+     font-weight: 600;
+   }
+
+
+   .controlrow{
+     display:flex;
+     flex-wrap: wrap;
+     gap: 10px 14px;
+     align-items:center;
+     margin: 10px 0 0 0;
+   }
+   .controlrow label{
+     font-size: 13px;
+     color: rgba(0,0,0,.72);
+     display:flex;
+     gap: 10px;
+     align-items:center;
+     padding: 8px 10px;
+     border: 1px solid var(--border);
+     border-radius: 12px;
+     background: rgba(0,0,0,.02);
+   }
+   .controlrow input[type="range"]{
+     width: 160px;
+   }
+   .controlrow .readout{
+     font-variant-numeric: tabular-nums;
+     font-weight: 650;
+     color: rgba(0,0,0,.78);
+     min-width: 3ch;
+     text-align:right;
+   }
+
+
+   details{
+     max-width: 56em;
+     border: 1px solid var(--border);
+     border-radius: 12px;
+     padding: 14px 16px;
+     background: rgba(0,0,0,.02);
+     margin: 14px 0 18px 0;
+     box-sizing: border-box;
+   }
+   summary{ cursor: pointer; font-weight: 650; color: rgba(0,0,0,.78); }
+   .small{ font-size: 13px; color: var(--muted); max-width: 56em; }
+
+
+   dt-footer{
+     display:block;
+     border-top: 1px solid var(--border);
+     margin-top: 44px;
+     padding-top: 16px;
+     color: var(--muted);
+     font-size: 13px;
+     max-width: 56em;
+   }
+
+
+   /* SVG text colors */
+   svg text{ font-family: inherit; }
+   .sv-muted{ fill: rgba(0,0,0,.62); }
+   .sv-text{ fill: rgba(0,0,0,.84); }
+   .sv-grid{ stroke: rgba(0,0,0,.08); }
+
+
+   .hint{
+     font-size: 13px;
+     color: rgba(0,0,0,.62);
+     margin: 6px 0 0 0;
+     max-width: 56em;
+   }
+
+
+   /* Tooltip */
+   .chartwrap{ position: relative; }
+   .tooltip{
+     position:absolute;
+     pointer-events:none;
+     transform: translate(-50%, -110%);
+     background: rgba(255,255,255,.96);
+     border: 1px solid rgba(0,0,0,.14);
+     box-shadow: 0 10px 24px rgba(0,0,0,.10);
+     border-radius: 12px;
+     padding: 8px 10px;
+     font-size: 12px;
+     color: rgba(0,0,0,.78);
+     line-height: 1.25;
+     opacity: 0;
+     transition: opacity 120ms ease;
+     white-space: nowrap;
+   }
+   .tooltip strong{ color: rgba(0,0,0,.86); font-weight: 700; }
+
+
+   .mini-toggle{
+     display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+     margin: 10px 0 0 0;
+   }
+   .mini-toggle .pill{ display:inline-flex; align-items:center; gap:8px; }
+   .mini-toggle input{ transform: translateY(1px); }
+ </style>
 </head>
 
+
 <body>
-  <dt-header>
-    <div class="content">
-      <div class="brand"><span class="dot"></span>Research Notes</div>
-      <nav>
-        <a href="#constraint-first">Constraint-first</a>
-        <a href="#agents">Agents</a>
-        <a href="#policy">Policy knobs</a>
-        <a href="#pipeline">Pipeline</a>
-        <a href="#qa">QA loop</a>
-        <a href="#simulation">Simulation</a>
-      </nav>
-    </div>
-  </dt-header>
-
-  <dt-article>
-    <h1>A Client-Aware Multi-Agent Portfolio Builder</h1>
-    <h2>
-      A transparent system that evaluates opportunities through independent lenses, enforces portfolio rules by design,
-      and improves through a structured audit-and-learning loop.
-    </h2>
-
-    <dt-byline>
-      <div class="row">
-        <div><span class="k">By</span>Arjan Singh</div>
-        <div><span class="k">Focus</span>Model design, safety, explainability</div>
-      </div>
-    </dt-byline>
-
-    <p>
-      Most investing workflows fail for one of two reasons: they’re inconsistent (decisions depend on mood and memory),
-      or they’re opaque (decisions depend on a “score” nobody can unpack). This project treated the problem as a system
-      design challenge: make decisions <em>repeatable</em>, <em>explainable</em>, and <em>constraint-aware</em>.
-    </p>
-
-    <p>
-      What makes this harder than it sounds is that “good ideas” and “good portfolios” are not the same thing. A strong thesis
-      can still lead to poor outcomes if it is sized too aggressively, clustered in one theme, or based on assumptions that fail
-      under stress. To address this, I conceptualized and built an <strong>Agentic AI Investment Manager</strong>: an autonomous,
-      multi-agent system that treats <em>portfolio construction</em> as part of the model, not an afterthought done by hand.
-      Throughout this post, references to "the system" describe this Agentic AI Investment Manager.
-    </p>
-
-    <div class="callout" id="constraint-first">
-      <strong>Definition — client-aware:</strong> A model is client-aware when it encodes an investment policy
-      (liquidity requirements, diversification limits, drawdown awareness, and a stability tilt) and uses that policy
-      to gate candidates and weight signals <em>before</em> a portfolio is constructed.
-      In other words, it bakes in what the client can actually hold—liquidity realities, concentration limits, and downside
-      tolerance—so the “best” idea is only best if it fits the policy.
-    </div>
-
-    <h3>Start with rules, not ideas</h3>
-    <p>
-      The system does not begin with "what looks exciting." It begins with a rule set that translates what the
-      client is actually optimizing for: steady compounding, controlled downside, and decisions that can be defended.
-      From there, the rest becomes a pipeline: input → scoring → constraints → portfolio fit → audit trail.
-    </p>
-
-    <p>
-      Concretely, the rule set shows up as hard checks (can it be traded at the intended size, does it break a concentration
-      limit, is the data reliable?) and soft preferences (tilt toward higher-quality cash flows, avoid fragile exposure to single
-      macro variables). The key is that rules are expressed in portfolio terms—weights, exposures, and risk contribution—so
-      enforcement is automatic and consistent.
-    </p>
-
-    <figure aria-label="System overview diagram">
-      <div class="chartbox">
-        <svg viewBox="0 0 980 360" role="img" aria-label="A system diagram showing inputs feeding into five agents, then a client layer, then portfolio construction and logging.">
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1">
-              <stop offset="0" stop-color="rgba(11,79,108,.14)"></stop>
-              <stop offset="1" stop-color="rgba(0,0,0,0)"></stop>
-            </linearGradient>
-          </defs>
-
-          <rect x="40" y="70" rx="14" ry="14" width="210" height="230" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
-          <text x="60" y="108" class="sv-text" font-weight="700">Inputs</text>
-          <text x="60" y="140" class="sv-muted">• Price history</text>
-          <text x="60" y="166" class="sv-muted">• Fundamentals</text>
-          <text x="60" y="192" class="sv-muted">• News / sentiment</text>
-          <text x="60" y="218" class="sv-muted">• Macro indicators</text>
-          <text x="60" y="244" class="sv-muted">• Universe filters</text>
-
-          <rect x="280" y="70" rx="14" ry="14" width="370" height="230" fill="url(#g1)" stroke="rgba(11,79,108,.28)"/>
-          <text x="300" y="108" class="sv-text" font-weight="700">Independent scoring agents</text>
-
-          <rect x="300" y="130" rx="12" ry="12" width="160" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
-          <text x="318" y="160" class="sv-text" font-weight="650">Value</text>
-
-          <rect x="490" y="130" rx="12" ry="12" width="140" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
-          <text x="508" y="160" class="sv-text" font-weight="650">Growth</text>
-
-          <rect x="300" y="190" rx="12" ry="12" width="160" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
-          <text x="318" y="220" class="sv-text" font-weight="650">Macro / Regime</text>
-
-          <rect x="490" y="190" rx="12" ry="12" width="140" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
-          <text x="508" y="220" class="sv-text" font-weight="650">Risk</text>
-
-          <rect x="300" y="250" rx="12" ry="12" width="330" height="44" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
-          <text x="318" y="278" class="sv-text" font-weight="650">Sentiment (deliberately capped)</text>
-
-          <rect x="680" y="70" rx="14" ry="14" width="260" height="110" fill="rgba(11,79,108,.08)" stroke="rgba(11,79,108,.28)"/>
-          <text x="700" y="108" class="sv-text" font-weight="700">Client layer</text>
-          <text x="700" y="140" class="sv-muted">• Preset weights</text>
-          <text x="700" y="166" class="sv-muted">• Hard constraints</text>
-
-          <rect x="680" y="196" rx="14" ry="14" width="260" height="104" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
-          <text x="700" y="232" class="sv-text" font-weight="700">Portfolio constructor</text>
-          <text x="700" y="260" class="sv-muted">• Fit checks</text>
-          <text x="700" y="286" class="sv-muted">• Audit log</text>
-
-          <g fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2" stroke-linecap="round">
-            <path d="M250 185 C265 185, 270 185, 280 185"/>
-            <path d="M650 185 C665 185, 670 135, 680 135"/>
-            <path d="M650 185 C665 185, 670 246, 680 246"/>
-          </g>
-          <g fill="rgba(0,0,0,.28)">
-            <polygon points="280,185 270,180 270,190"/>
-            <polygon points="680,135 670,130 670,140"/>
-            <polygon points="680,246 670,241 670,251"/>
-          </g>
-
-          <text x="40" y="336" class="sv-muted" font-size="12">
-            The core pattern: independent signals → policy-aware weighting → portfolio gates → traceable outputs.
-          </text>
-        </svg>
-      </div>
-      <figcaption>
-        The architecture is intentionally “boring”: independent agents, a client layer, and portfolio gates.
-        The point is to reduce discretionary bias and make every decision traceable.
-      </figcaption>
-    </figure>
-
-    <h3 id="agents">Why multiple agents?</h3>
-    <p>
-      The breakthrough insight came from studying how investment committees operate at venture capital firms. In those settings,
-      different specialists bring distinct expertise to the table: one partner focuses on market opportunity, another on
-      financials, a third on competitive dynamics. The final investment decision emerges from structured debate, not from
-      averaging everyone's opinion into a single score. This realization led me to architect the system around multiple
-      independent agents rather than a monolithic model.
-    </p>
-
-    <p>
-      A single blended score hides disagreements. Multiple agents surface them. When one lens likes an opportunity and another
-      lens is skeptical, the system does not average the tension into a vague number. It keeps the disagreement visible.
-      That makes the model debuggable: you can ask <em>which lens</em> drove a decision and <em>why</em>.
-    </p>
-
-    <p>
-      In the model, that cross-examination is implemented as "score + rationale" outputs, plus
-      portfolio-fit gates that can veto a high-scoring name when the risk lens flags concentration, correlation overlap, or
-      downside sensitivity.
-      When I built it, I kept each agent as a small, testable module and forced every score to carry a short rationale, so I
-      could spot disagreements early and avoid hiding them behind a single blended number.
-    </p>
-
-    <details>
-      <summary>What each agent is responsible for</summary>
-      <ul>
-        <li><strong>Value:</strong> penalizes overpayment and rewards durable cash-generation signals (e.g., valuation multiples, free-cash-flow yield, balance-sheet strength), normalized for fair comparisons.</li>
-        <li><strong>Growth / Momentum:</strong> looks for sustained strength across weeks (not one-day spikes), and treats sharp reversals as warnings rather than “buy the dip” defaults.</li>
-        <li><strong>Macro / Regime:</strong> checks if the environment supports the thesis (e.g., rate/inflation sensitivity, sector tailwinds vs headwinds) and flags mismatches early.</li>
-        <li><strong>Risk:</strong> models volatility, drawdown sensitivity, and overlap (correlation / clustering) at both the asset level and the portfolio level.</li>
-        <li><strong>Sentiment:</strong> captures attention (news tone, crowding, spikes in focus)—but is capped so headlines can’t override fundamentals.</li>
-      </ul>
-      <p class="small">
-        Each agent emits (1) a score and (2) a short rationale. “Explainability” is built in, not bolted on.
-      </p>
-    </details>
-
-    <h3 id="policy">Presets that feel like policies, not knobs</h3>
-    <div class="two-col">
-      <div>
-        <p>
-          To keep the system usable, the client layer supports presets that encode priorities. A safety-oriented preset
-          emphasizes Risk and Value while keeping Sentiment small. A growth-leaning preset shifts weight toward momentum-like
-          signals, but still must pass the same portfolio-level gates.
-        </p>
-
-        <p>
-          Under the hood, a preset is a transparent weighting scheme plus guardrails: how much each agent can move the composite
-          score, and how strongly portfolio constraints can override that score at the end. The interactivity below is there to
-          make the policy surface visible—so you can see what the model is <em>allowed</em> to care about before you ever look at
-          performance.
-        </p>
-
-        <div class="pillbar" role="group" aria-label="Preset selector">
-          <button class="pill" id="presetSafety" aria-pressed="true" type="button">Safety / steady growth</button>
-          <button class="pill" id="presetBalanced" aria-pressed="false" type="button">Balanced</button>
-          <button class="pill" id="presetGrowth" aria-pressed="false" type="button">Growth-leaning</button>
-        </div>
-
-        <div class="controlrow" aria-label="Policy controls">
-          <label>
-            Sentiment cap
-            <input id="sentimentCap" type="range" min="0" max="25" step="1" value="10" />
-            <span class="readout" id="sentimentReadout">10</span><span class="sv-muted" style="font-size:13px;">%</span>
-          </label>
-        </div>
-
-        <p class="hint">
-          <strong>Sentiment cap</strong> is a hard ceiling on how much “news/attention” can influence scoring and sizing.
-          Even if sentiment spikes, it can’t dominate the decision; it remains a supporting signal, not the steering wheel.<br><br>
-          Tip: click the presets, then slide the sentiment cap. The chart updates to show how policy changes what the model listens to.
-        </p>
-
-        <div class="callout" id="presetNotes">
-          <strong id="presetNotesTitle">Safety / steady growth</strong>
-          <p class="small" id="presetNotesBody" style="margin:8px 0 0 0;">
-            Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises.
-            Cons: can lag fast, momentum-driven rallies.
-          </p>
-        </div>
-      </div>
-
-      <figure aria-label="Preset weights bar chart">
-        <div class="chartbox">
-          <svg id="weightsChart" viewBox="0 0 520 340" role="img" aria-label="A bar chart showing the relative weights of Value, Growth, Macro, Risk, and Sentiment.">
-            <rect x="0" y="0" width="520" height="340" fill="white"/>
-
-            <text x="26" y="34" class="sv-text" font-weight="700">Signal weights (example preset)</text>
-            <text x="26" y="56" class="sv-muted" font-size="12">Higher bar = more influence on scoring + sizing</text>
-
-            <text id="presetLabel" x="26" y="88" class="sv-text" font-weight="650">Safety / steady growth</text>
-            <text id="capLabel" x="26" y="108" class="sv-muted" font-size="12">Sentiment capped at 10%</text>
-
-            <g class="sv-grid">
-              <line x1="92" y1="300" x2="494" y2="300"></line>
-              <line x1="92" y1="255" x2="494" y2="255"></line>
-              <line x1="92" y1="210" x2="494" y2="210"></line>
-              <line x1="92" y1="165" x2="494" y2="165"></line>
-              <line x1="92" y1="120" x2="494" y2="120"></line>
-            </g>
-
-            <text x="82" y="304" class="sv-muted" font-size="12" text-anchor="end">0</text>
-            <text x="82" y="259" class="sv-muted" font-size="12" text-anchor="end">25</text>
-            <text x="82" y="214" class="sv-muted" font-size="12" text-anchor="end">50</text>
-            <text x="82" y="169" class="sv-muted" font-size="12" text-anchor="end">75</text>
-            <text x="82" y="124" class="sv-muted" font-size="12" text-anchor="end">100</text>
-
-            <g id="bars"></g>
-            <line x1="92" y1="300" x2="494" y2="300" stroke="rgba(0,0,0,.12)"></line>
-          </svg>
-        </div>
-
-        <figcaption>
-          This is a policy view, not a performance claim: it shows how a preset and a sentiment cap change the model’s emphasis
-          while constraints still govern everything downstream.
-        </figcaption>
-      </figure>
-    </div>
-
-    <h3 id="pipeline">From universe to portfolio (without hand-waving)</h3>
-    <p>
-      The engine evaluates candidates in parallel so each one is subjected to the same structure. Before anything can enter the
-      final set, portfolio-level logic enforces diversification and risk controls mathematically, not intuitively.
-      (Hover the stages for quick explanations.)
-    </p>
-
-    <p>
-      Notice that “eligibility” is not a performance filter; it’s a reliability filter. The goal is to reduce false confidence
-      by excluding names with fragile data, limited liquidity, or structural constraints that make sizing unrealistic. Only after
-      those basics are satisfied does multi-agent scoring become meaningful.
-    </p>
-
-    <div class="controlrow" aria-label="Gating strictness controls" style="margin: 6px 0 6px 0;">
-      <label>
-        Gating strictness
-        <span class="pill" id="gateConservative" aria-pressed="false" role="button" tabindex="0">Conservative</span>
-        <span class="pill" id="gateFlexible" aria-pressed="true" role="button" tabindex="0">Flexible</span>
-      </label>
-      <span class="sv-muted" style="font-size:13px;">Flexible = lighter portfolio checks. Conservative = stricter gates.</span>
-    </div>
-
-    <figure aria-label="Candidate pipeline chart">
-      <div class="chartbox">
-        <svg id="pipelineChart" viewBox="0 0 980 276" role="img" aria-label="A pipeline chart showing universe, eligibility filters, multi-agent scoring, and portfolio-fit gates.">
-          <rect x="0" y="0" width="980" height="276" fill="white"/>
-          <text x="26" y="36" class="sv-text" font-weight="700">Decision pipeline (conceptual)</text>
-          <text x="26" y="58" class="sv-muted" font-size="12">Each stage is deterministic: same inputs → same outputs</text>
-
-          <g>
-            <text x="26" y="102" class="sv-text" font-weight="650">1) Universe</text>
-            <text x="26" y="142" class="sv-text" font-weight="650">2) Eligibility filters</text>
-            <text x="26" y="182" class="sv-text" font-weight="650">3) Multi-agent scoring</text>
-            <text x="26" y="222" class="sv-text" font-weight="650">4) Portfolio-fit gates</text>
-
-            <rect x="240" y="84"  width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
-            <rect x="240" y="124" width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
-            <rect x="240" y="164" width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
-            <rect x="240" y="204" width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
-
-            <rect x="240" y="84"  width="680" height="24" rx="12" fill="rgba(11,79,108,.18)" stroke="rgba(11,79,108,.25)">
-              <title>Universe: broad starting set (liquid, tradable candidates)</title>
-            </rect>
-            <rect id="bar2" x="240" y="124" width="520" height="24" rx="12" fill="rgba(11,79,108,.16)" stroke="rgba(11,79,108,.22)">
-              <title>Eligibility: data quality + liquidity + baseline fundamentals checks</title>
-            </rect>
-            <rect id="bar3" x="240" y="164" width="520" height="24" rx="12" fill="rgba(11,79,108,.14)" stroke="rgba(11,79,108,.20)">
-              <title>Scoring: multiple agents score independently; disagreements stay visible</title>
-            </rect>
-            <rect id="bar4" x="240" y="204" width="300" height="24" rx="12" fill="rgba(11,79,108,.12)" stroke="rgba(11,79,108,.18)">
-              <title>Portfolio gates: exposure limits, overlap checks, volatility contribution, sizing constraints</title>
-            </rect>
-
-            <text x="910" y="102" text-anchor="end" class="sv-muted" font-size="12">broad</text>
-            <text x="910" y="142" text-anchor="end" class="sv-muted" font-size="12">liquidity + quality</text>
-            <text x="910" y="182" text-anchor="end" class="sv-muted" font-size="12">consistent scoring</text>
-            <text x="910" y="222" text-anchor="end" class="sv-muted" font-size="12">diversification + risk</text>
-          </g>
-
-          <text x="26" y="262" class="sv-muted" font-size="12">
-            Gates include exposure limits, correlation overlap, volatility contribution, and position-size constraints.
-          </text>
-        </svg>
-      </div>
-      <figcaption>
-        The point isn’t to “filter harder.” It’s to enforce constraints early, so the final output is a consequence of policy.
-      </figcaption>
-    </figure>
-
-    <h3 id="qa">Safety and continuous improvement</h3>
-    <p>
-      A decision system is only useful if it stays calibrated. Every run is logged with inputs, scores, and assumptions.
-      Then performance is monitored; large surprises trigger an audit, and any adjustments are small, versioned, and reversible.
-    </p>
-
-    <p>
-      Audits focus on attribution: if something goes wrong, the first question is “which assumption failed?” Was it a macro regime
-      shift, a risk-model miss (correlations jumped), or a data issue that created false certainty? Each category has a different
-      fix, and separating them prevents the common failure mode of over-tuning after every drawdown.
-    </p>
-
-    <figure aria-label="QA loop diagram">
-      <div class="chartbox">
-        <svg viewBox="0 0 980 300" role="img" aria-label="A loop diagram: log run, monitor, audit triggers, diagnose driver, small adjustments, versioned.">
-          <rect x="0" y="0" width="980" height="300" fill="white"/>
-          <text x="26" y="36" class="sv-text" font-weight="700">QA loop (structured, capped, auditable)</text>
-          <text x="26" y="58" class="sv-muted" font-size="12">Improves calibration without becoming reactive or opaque</text>
-
-          <g>
-            <rect x="40" y="96" rx="14" width="210" height="76" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
-            <text x="58" y="128" class="sv-text" font-weight="650">1) Log every run</text>
-            <text x="58" y="154" class="sv-muted" font-size="12">inputs • scores • assumptions</text>
-
-            <rect x="290" y="96" rx="14" width="220" height="76" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
-            <text x="308" y="128" class="sv-text" font-weight="650">2) Monitor outcomes</text>
-            <text x="308" y="154" class="sv-muted" font-size="12">track drift & surprises</text>
-
-            <rect x="550" y="82" rx="14" width="220" height="106" fill="rgba(154,91,19,.08)" stroke="rgba(154,91,19,.26)"/>
-            <text x="568" y="118" class="sv-text" font-weight="650">3) Trigger audit</text>
-            <text x="568" y="144" class="sv-muted" font-size="12">large deviation threshold</text>
-            <text x="568" y="166" class="sv-muted" font-size="12">from evaluation baseline</text>
-
-            <rect x="810" y="96" rx="14" width="130" height="76" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
-            <text x="828" y="128" class="sv-text" font-weight="650">4) Diagnose</text>
-            <text x="828" y="154" class="sv-muted" font-size="12">driver + agent miss</text>
-
-            <rect x="640" y="206" rx="14" width="300" height="74" fill="rgba(31,122,31,.08)" stroke="rgba(31,122,31,.24)"/>
-            <text x="658" y="238" class="sv-text" font-weight="650">5) Small adjustments</text>
-            <text x="658" y="262" class="sv-muted" font-size="12">capped • versioned • reversible</text>
-          </g>
-
-          <g fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2" stroke-linecap="round">
-            <path d="M250 134 C270 134, 275 134, 290 134"/>
-            <path d="M510 134 C530 134, 535 134, 550 134"/>
-            <path d="M770 134 C790 134, 795 134, 810 134"/>
-            <path d="M875 172 C875 194, 860 206, 820 206"/>
-            <path d="M640 243 C430 260, 210 230, 145 172"/>
-          </g>
-          <g fill="rgba(0,0,0,.28)">
-            <polygon points="290,134 280,129 280,139"/>
-            <polygon points="550,134 540,129 540,139"/>
-            <polygon points="810,134 800,129 800,139"/>
-            <polygon points="820,206 830,201 830,211"/>
-            <polygon points="145,172 154,166 156,176"/>
-          </g>
-
-          <text x="26" y="292" class="sv-muted" font-size="12">
-            The loop learns slowly by design: interpretability first, and an audit trail for every change.
-          </text>
-        </svg>
-      </div>
-      <figcaption>
-        The QA loop keeps the system honest: it explains surprises and only updates in small, logged steps.
-      </figcaption>
-    </figure>
-
-    <h3 id="simulation">A representative simulation result</h3>
-    <p>
-      In a simulation using real market data, the system was run with a safety / slow steady growth preset.
-      Over a two-month window, it constructed a portfolio that rose by roughly <strong>15%</strong>.
-    </p>
-
-    <p>
-      To validate that this result was not a fluke, I ran the simulation <strong>50 times</strong> across the same period,
-      normalizing for macro-economic factors such as interest rate changes and broad market movements. The system
-      consistently produced returns in the <strong>12% to 18% range</strong>, demonstrating that the outcome reflects
-      the underlying architecture rather than chance. This repeatability is a direct consequence of how the system was built:
-      deterministic scoring, explicit constraints, and a pipeline where identical inputs always produce identical outputs.
-    </p>
-
-    <p>
-      Put simply: <strong>15% in two months is a very strong short window</strong>.
-      It is the kind of number that stands out, partly because short stretches can be unusually favorable (or unfavorable)
-      depending on the market regime. That is why the most honest way to read it is: the pipeline can <em>find and size</em>
-      opportunities when conditions cooperate, while still obeying the safety policy.
-    </p>
-
-    <p>
-      For clarity, the chart plots cumulative return relative to the start of the window (Week 0 = 0%). When you toggle the
-      S&amp;P 500 line, it is normalized the same way (its Week 0 close is set to 0%), so you’re comparing paths rather than
-      raw index levels.
-    </p>
-
-    <p>
-      The benchmark overlay is intentionally simple: it’s there to show how much short-horizon context can change. Broad markets
-      can be choppy over eight-week spans, and a constraint-first approach is designed to keep “doing well” from requiring perfect
-      timing or fragile concentration bets.
-    </p>
-
-    <div class="mini-toggle" aria-label="Equity curve controls">
-      <span class="pill" style="cursor:default; border-style:dashed;">
-        <strong style="font-weight:650;">Interactive:</strong> hover the chart
-      </span>
-
-      <label class="pill" style="padding:6px 10px;">
-        <input id="toggleSP" type="checkbox" />
-        Compare with S&amp;P 500 (8-week window)
-      </label>
-
-      <label class="pill" style="padding:6px 10px;">
-        <input id="toggleMarkers" type="checkbox" />
-        Show week markers
-      </label>
-    </div>
-
-    <figure aria-label="Equity curve chart">
-      <div class="chartbox chartwrap" id="equityWrap">
-        <div class="tooltip" id="equityTip" role="status" aria-live="polite"></div>
-
-        <svg id="equitySvg" viewBox="0 0 980 360" role="img"
-          aria-label="An interactive line chart showing a two-month equity curve rising to about +15% and an optional S&P 500 comparison line over an eight-week period.">
-          <rect x="0" y="0" width="980" height="360" fill="white"/>
-
-          <text x="26" y="36" class="sv-text" font-weight="700">Growth curve (example run, ~2 months)</text>
-          <text x="26" y="58" class="sv-muted" font-size="12">Hover to scrub • toggle S&amp;P comparison for context</text>
-
-          <!-- plot frame -->
-          <rect x="70" y="90" width="880" height="220" fill="rgba(0,0,0,.01)" stroke="rgba(0,0,0,.10)"/>
-
-          <!-- gridlines for symmetric -15%..+15% axis -->
-          <g class="sv-grid">
-            <line x1="70" y1="126.667" x2="950" y2="126.667"></line> <!-- +10 -->
-            <line x1="70" y1="163.333" x2="950" y2="163.333"></line> <!-- +5 -->
-            <line x1="70" y1="200" x2="950" y2="200" stroke="rgba(0,0,0,.14)"></line> <!-- 0 baseline -->
-            <line x1="70" y1="236.667" x2="950" y2="236.667"></line> <!-- -5 -->
-            <line x1="70" y1="273.333" x2="950" y2="273.333"></line> <!-- -10 -->
-          </g>
-
-          <!-- y labels -->
-          <text x="58" y="94"   class="sv-muted" font-size="12" text-anchor="end">+15%</text>
-          <text x="58" y="130"  class="sv-muted" font-size="12" text-anchor="end">+10%</text>
-          <text x="58" y="166"  class="sv-muted" font-size="12" text-anchor="end">+5%</text>
-          <text x="58" y="204"  class="sv-muted" font-size="12" text-anchor="end">0%</text>
-          <text x="58" y="240"  class="sv-muted" font-size="12" text-anchor="end">-5%</text>
-          <text x="58" y="276"  class="sv-muted" font-size="12" text-anchor="end">-10%</text>
-          <text x="58" y="312"  class="sv-muted" font-size="12" text-anchor="end">-15%</text>
-
-          <!-- x labels -->
-          <text x="70"  y="342" class="sv-muted" font-size="12">Week 0</text>
-          <text x="290" y="342" class="sv-muted" font-size="12">Week 2</text>
-          <text x="510" y="342" class="sv-muted" font-size="12">Week 4</text>
-          <text x="730" y="342" class="sv-muted" font-size="12">Week 6</text>
-          <text x="910" y="342" class="sv-muted" font-size="12" text-anchor="end">Week 8</text>
-
-          <!-- legend -->
-          <g id="legend">
-            <rect x="708" y="18" width="12" height="12" rx="3" fill="rgba(11,79,108,.85)"></rect>
-            <text x="726" y="28" class="sv-muted" font-size="12">Model return</text>
-
-            <rect id="legSPBox" x="820" y="18" width="12" height="12" rx="3" fill="rgba(0,0,0,.35)" opacity="0"></rect>
-            <text id="legSPText" x="838" y="28" class="sv-muted" font-size="12" opacity="0">S&amp;P 500 (window)</text>
-          </g>
-
-          <!-- paths (drawn by JS) -->
-          <path id="equityFill" fill="rgba(11,79,108,.10)" stroke="none"></path>
-          <path id="equityLine" fill="none" stroke="rgba(11,79,108,.85)" stroke-width="4" stroke-linecap="round"></path>
-
-          <path id="spLine" fill="none" stroke="rgba(0,0,0,.40)" stroke-width="3" stroke-linecap="round" opacity="0"></path>
-
-          <!-- markers (optional) -->
-          <g id="weekMarkersOur" opacity="0"></g>
-          <g id="weekMarkersSP" opacity="0"></g>
-
-          <!-- interactive crosshair -->
-          <line id="crossX" x1="0" y1="90" x2="0" y2="310" stroke="rgba(0,0,0,.18)" stroke-width="1" opacity="0"/>
-          <circle id="crossDotHalo" cx="0" cy="0" r="11" fill="rgba(31,122,31,.18)" opacity="0"/>
-          <circle id="crossDot" cx="0" cy="0" r="6" fill="rgba(31,122,31,.85)" opacity="0"/>
-
-          <!-- hover overlay -->
-          <rect id="hoverZone" x="70" y="90" width="880" height="220" fill="transparent" />
-        </svg>
-      </div>
-
-      <figcaption>
-        Toggle the S&amp;P 500 line for a simple reality check: the comparison is an eight-week stretch that ended down,
-        while the example run rose. It’s not a victory lap—it’s a reminder that regime matters, and why the model is built
-        around constraints and explainability.
-      </figcaption>
-    </figure>
-
-    <dt-footer>
-      <p>
-        <strong>Note:</strong> This post describes a research system and its design choices. The simulation result is a reported
-        outcome from an example run using real market data and a safety-oriented preset; it is not a guarantee of future performance.
-        Treat outputs as structured hypotheses with an audit trail—not as automatic trades.
-      </p>
-    </dt-footer>
-  </dt-article>
-
-  <script>
-    (function(){
-      const presets = {
-        safety:   { label: "Safety / steady growth", base: { Value: 25, Growth: 18, Macro: 17, Risk: 30, Sentiment: 10 } },
-        balanced: { label: "Balanced",              base: { Value: 22, Growth: 22, Macro: 18, Risk: 22, Sentiment: 16 } },
-        growth:   { label: "Growth-leaning",        base: { Value: 18, Growth: 30, Macro: 17, Risk: 15, Sentiment: 20 } }
-      };
-
-      const colors = {
-        Value: "rgba(11,79,108,.55)",
-        Growth: "rgba(11,79,108,.40)",
-        Macro: "rgba(11,79,108,.32)",
-        Risk: "rgba(31,122,31,.45)",
-        Sentiment: "rgba(154,91,19,.38)"
-      };
-
-      let currentPresetKey = "safety";
-      let currentCap = 10;
-
-      const barsG = document.getElementById("bars");
-      const presetLabel = document.getElementById("presetLabel");
-      const capLabel = document.getElementById("capLabel");
-      const capSlider = document.getElementById("sentimentCap");
-      const capReadout = document.getElementById("sentimentReadout");
-      const presetNotesTitle = document.getElementById("presetNotesTitle");
-      const presetNotesBody = document.getElementById("presetNotesBody");
-
-      const bar2 = document.getElementById("bar2");
-      const bar3 = document.getElementById("bar3");
-      const bar4 = document.getElementById("bar4");
-      const gateConservative = document.getElementById("gateConservative");
-      const gateFlexible = document.getElementById("gateFlexible");
-      let gatingMode = "flexible";
-
-      const chart = {
-        xStart: 128,
-        yBase: 300,
-        maxH: 180,
-        barW: 58,
-        gap: 18,
-        categories: ["Value","Growth","Macro","Risk","Sentiment"]
-      };
-
-      const presetNotes = {
-        safety: {
-          title: "Safety / steady growth",
-          body: "Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises. Cons: can lag fast, momentum-driven rallies."
-        },
-        balanced: {
-          title: "Balanced",
-          body: "A middle path that keeps the signal stack diversified. Pros: adapts across regimes without overfitting one style. Cons: rarely leads a sharp rally or a sharp defensive move."
-        },
-        growth: {
-          title: "Growth-leaning",
-          body: "Tilts toward Growth and Sentiment to capture trends. Pros: stronger upside participation when momentum persists. Cons: more drawdown sensitivity if the regime turns." 
-        }
-      };
-
-      function normalizeWithCap(baseWeights, cap){
-        const others = ["Value","Growth","Macro","Risk"];
-        const baseOtherSum = others.reduce((s,k)=>s + baseWeights[k], 0);
-        const targetOtherSum = 100 - cap;
-
-        const out = {};
-        others.forEach(k => out[k] = (baseWeights[k] / baseOtherSum) * targetOtherSum);
-        out.Sentiment = cap;
-
-        const rounded = {};
-        let running = 0;
-        others.forEach(k => {
-          const v = Math.round(out[k]);
-          rounded[k] = v;
-          running += v;
-        });
-        rounded.Sentiment = Math.round(out.Sentiment);
-
-        const diff = 100 - (running + rounded.Sentiment);
-        rounded.Risk += diff;
-
-        return rounded;
-      }
-
-      function renderWeights(){
-        const preset = presets[currentPresetKey];
-        const weights = normalizeWithCap(preset.base, currentCap);
-
-        presetLabel.textContent = preset.label;
-        capLabel.textContent = `Sentiment capped at ${currentCap}%`;
-        capReadout.textContent = String(currentCap);
-        capSlider.value = String(currentCap);
-
-        const note = presetNotes[currentPresetKey];
-        if(note){
-          presetNotesTitle.textContent = note.title;
-          presetNotesBody.textContent = note.body;
-        }
-
-        barsG.innerHTML = "";
-
-        chart.categories.forEach((c, i) => {
-          const val = weights[c];
-          const h = Math.max(2, (val/100) * chart.maxH);
-          const x = chart.xStart + i*(chart.barW + chart.gap);
-          const y = chart.yBase - h;
-
-          const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
-          rect.setAttribute("x", x);
-          rect.setAttribute("y", y);
-          rect.setAttribute("width", chart.barW);
-          rect.setAttribute("height", h);
-          rect.setAttribute("rx", 10);
-          rect.setAttribute("fill", colors[c]);
-          rect.setAttribute("stroke", "rgba(0,0,0,.18)");
-          const title = document.createElementNS("http://www.w3.org/2000/svg","title");
-          title.textContent = `${c}: ${val}% weight`;
-          rect.appendChild(title);
-          barsG.appendChild(rect);
-
-          const vtxt = document.createElementNS("http://www.w3.org/2000/svg","text");
-          vtxt.setAttribute("x", x + chart.barW/2);
-          vtxt.setAttribute("y", Math.max(132, y - 8));
-          vtxt.setAttribute("text-anchor","middle");
-          vtxt.setAttribute("class","sv-text");
-          vtxt.setAttribute("font-weight","650");
-          vtxt.setAttribute("font-size","12");
-          vtxt.textContent = String(val);
-          barsG.appendChild(vtxt);
-
-          const label = document.createElementNS("http://www.w3.org/2000/svg","text");
-          label.setAttribute("x", x + chart.barW/2);
-          label.setAttribute("y", 330);
-          label.setAttribute("text-anchor","middle");
-          label.setAttribute("class","sv-muted");
-          label.setAttribute("font-size","12");
-          label.textContent = c;
-          barsG.appendChild(label);
-        });
-      }
-
-      function setPressed(activeId, ids){
-        ids.forEach(id=>{
-          const el = document.getElementById(id);
-          el.setAttribute("aria-pressed", id === activeId ? "true" : "false");
-        });
-      }
-
-      document.getElementById("presetSafety").addEventListener("click", () => {
-        currentPresetKey = "safety";
-        setPressed("presetSafety", ["presetSafety","presetBalanced","presetGrowth"]);
-        renderWeights();
-      });
-      document.getElementById("presetBalanced").addEventListener("click", () => {
-        currentPresetKey = "balanced";
-        setPressed("presetBalanced", ["presetSafety","presetBalanced","presetGrowth"]);
-        renderWeights();
-      });
-      document.getElementById("presetGrowth").addEventListener("click", () => {
-        currentPresetKey = "growth";
-        setPressed("presetGrowth", ["presetSafety","presetBalanced","presetGrowth"]);
-        renderWeights();
-      });
-
-      capSlider.addEventListener("input", (e) => {
-        currentCap = parseInt(e.target.value, 10);
-        renderWeights();
-      });
-
-      function applyGating(){
-        const w4 = (gatingMode === "conservative") ? 300 : 380;
-        bar4.setAttribute("width", String(w4));
-        bar2.setAttribute("width", gatingMode === "conservative" ? "520" : "560");
-        bar3.setAttribute("width", gatingMode === "conservative" ? "520" : "560");
-      }
-
-      function toggleGate(to){
-        gatingMode = to;
-        if(to === "conservative"){
-          gateConservative.setAttribute("aria-pressed","true");
-          gateFlexible.setAttribute("aria-pressed","false");
-        } else {
-          gateConservative.setAttribute("aria-pressed","false");
-          gateFlexible.setAttribute("aria-pressed","true");
-        }
-        applyGating();
-      }
-
-      gateConservative.addEventListener("click", () => toggleGate("conservative"));
-      gateFlexible.addEventListener("click", () => toggleGate("flexible"));
-      gateConservative.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("conservative"); }});
-      gateFlexible.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("flexible"); }});
-
-      renderWeights();
-      applyGating();
-    })();
-
-    (function(){
-      const svg = document.getElementById("equitySvg");
-      const hover = document.getElementById("hoverZone");
-      const tip = document.getElementById("equityTip");
-      const wrap = document.getElementById("equityWrap");
-
-      const crossX = document.getElementById("crossX");
-      const dot = document.getElementById("crossDot");
-      const halo = document.getElementById("crossDotHalo");
-
-      const fill = document.getElementById("equityFill");
-      const line = document.getElementById("equityLine");
-
-      const spLine = document.getElementById("spLine");
-      const toggleSP = document.getElementById("toggleSP");
-      const toggleMarkers = document.getElementById("toggleMarkers");
-
-      const markersOur = document.getElementById("weekMarkersOur");
-      const markersSP = document.getElementById("weekMarkersSP");
-
-      const legSPBox = document.getElementById("legSPBox");
-      const legSPText = document.getElementById("legSPText");
-
-      // Model example points (conceptual; percent return vs start)
-      const modelPts = [
-        { w: 0, p: 0.0,  date: "Week 0", note: "Baseline set. Policy + constraints applied first." },
-        { w: 1, p: 2.0,  date: "Week 1", note: "Small gains. Sizing stays conservative." },
-        { w: 2, p: 4.0,  date: "Week 2", note: "Signals align; gates still limit concentration." },
-        { w: 3, p: 3.2,  date: "Week 3", note: "Minor pullback. Risk lens tightens exposure." },
-        { w: 4, p: 6.5,  date: "Week 4", note: "Recovery. Policy weights favor stability." },
-        { w: 5, p: 8.0,  date: "Week 5", note: "Steady climb. Sentiment remains capped." },
-        { w: 6, p: 10.0, date: "Week 6", note: "Gating prevents overreach as returns rise." },
-        { w: 7, p: 12.2, date: "Week 7", note: "Compounding effect from consistent sizing." },
-        { w: 8, p: 15.0, date: "Week 8", note: "Strong finish for the window (still just one run)." }
-      ];
-
-      // Real S&P 500 (price index) snapshot window that underperformed over ~8 weeks.
-      // Values are end-of-day closes; we normalize to 0% at the start date.
-      const spWindow = [
-        { w: 0, date: "Oct 6, 2025",  close: 6552.51 },
-        { w: 1, date: "Oct 13, 2025", close: 6664.01 },
-        { w: 2, date: "Oct 20, 2025", close: 6791.69 },
-        { w: 3, date: "Oct 27, 2025", close: 6840.20 },
-        { w: 4, date: "Nov 3, 2025",  close: 6728.80 },
-        { w: 5, date: "Nov 10, 2025", close: 6734.11 },
-        { w: 6, date: "Nov 17, 2025", close: 6602.99 },
-        { w: 7, date: "Nov 24, 2025", close: 6849.09 },
-        { w: 8, date: "Dec 1, 2025",  close: 6870.40 }
-      ];
-      const spStart = spWindow[0].close;
-      const spPts = spWindow.map(d => ({
-        w: d.w,
-        p: ((d.close / spStart) - 1) * 100,
-        date: d.date,
-        close: d.close
-      }));
-
-      // Plot geometry (must match SVG)
-      const plot = { x0: 70, y0: 90, w: 880, h: 220 };
-      const maxAbs = 15; // symmetric scale -15..+15
-
-      const xFor = (week) => plot.x0 + (week / 8) * plot.w;
-      const yFor = (pct) => {
-        const p = Math.max(-maxAbs, Math.min(maxAbs, pct));
-        const t = (maxAbs - p) / (2 * maxAbs); // p=+maxAbs -> 0, p=-maxAbs -> 1
-        return plot.y0 + t * plot.h;
-      };
-      const baselineY = yFor(0);
-
-      function pathFrom(arr){
-        return arr.map((pt, i) => `${i === 0 ? "M" : "L"} ${xFor(pt.w)} ${yFor(pt.p)}`).join(" ");
-      }
-      function fillPathFrom(arr){
-        const first = arr[0];
-        const last  = arr[arr.length - 1];
-        return `${pathFrom(arr)} L ${xFor(last.w)} ${baselineY} L ${xFor(first.w)} ${baselineY} Z`;
-      }
-
-      function drawSeries(){
-        line.setAttribute("d", pathFrom(modelPts));
-        fill.setAttribute("d", fillPathFrom(modelPts));
-        spLine.setAttribute("d", pathFrom(spPts));
-      }
-
-      function buildMarkers(group, arr, fillColor){
-        group.innerHTML = "";
-        arr.forEach(pt => {
-          const cx = xFor(pt.w);
-          const cy = yFor(pt.p);
-          const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
-          c.setAttribute("cx", cx);
-          c.setAttribute("cy", cy);
-          c.setAttribute("r", 4);
-          c.setAttribute("fill", fillColor);
-          c.setAttribute("stroke", "rgba(255,255,255,.85)");
-          c.setAttribute("stroke-width", "1");
-          group.appendChild(c);
-        });
-      }
-
-      function showOrHideSP(){
-        const on = !!toggleSP.checked;
-        spLine.setAttribute("opacity", on ? "1" : "0");
-        legSPBox.setAttribute("opacity", on ? "1" : "0");
-        legSPText.setAttribute("opacity", on ? "1" : "0");
-
-        if(!on){
-          markersSP.setAttribute("opacity","0");
-        } else if(toggleMarkers.checked){
-          markersSP.setAttribute("opacity","1");
-        }
-      }
-
-      function showOrHideMarkers(){
-        const on = !!toggleMarkers.checked;
-        markersOur.setAttribute("opacity", on ? "1" : "0");
-        if(toggleSP.checked){
-          markersSP.setAttribute("opacity", on ? "1" : "0");
-        }
-      }
-
-      function svgToWrapPx(x, y){
-        const vb = svg.viewBox.baseVal;
-        const svgRect = svg.getBoundingClientRect();
-        const wrapRect = wrap.getBoundingClientRect();
-
-        const px = ( (x - vb.x) / vb.width ) * svgRect.width  + (svgRect.left - wrapRect.left);
-        const py = ( (y - vb.y) / vb.height) * svgRect.height + (svgRect.top  - wrapRect.top);
-        return { px, py };
-      }
-
-      function showTooltipAt(x, y, weekIdx){
-        const m = modelPts[weekIdx];
-        const sp = spPts[weekIdx];
-
-        const header = `<strong>Week ${m.w}</strong> · Model: ${m.p.toFixed(1)}%`;
-        const spLineTxt = toggleSP.checked
-          ? `<br><span style="color:rgba(0,0,0,.72)">S&amp;P 500:</span> ${sp.p.toFixed(1)}% <span style="color:rgba(0,0,0,.52)">(close ${sp.close.toFixed(2)})</span><br><span style="color:rgba(0,0,0,.52)">${sp.date}</span>`
-          : "";
-
-        tip.innerHTML = `${header}${spLineTxt}<br><span style="color:rgba(0,0,0,.62)">${m.note}</span>`;
-        const { px, py } = svgToWrapPx(x, y);
-        tip.style.left = px + "px";
-        tip.style.top  = py + "px";
-        tip.style.opacity = "1";
-      }
-
-      function hide(){
-        tip.style.opacity = "0";
-        crossX.setAttribute("opacity","0");
-        dot.setAttribute("opacity","0");
-        halo.setAttribute("opacity","0");
-      }
-
-      function nearestWeek(px){
-        const t = (px - plot.x0) / plot.w;
-        return Math.round(Math.max(0, Math.min(8, t * 8)));
-      }
-
-      function onMove(evt){
-        const pt = svg.createSVGPoint();
-        pt.x = evt.clientX; pt.y = evt.clientY;
-        const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-
-        const cx = Math.max(plot.x0, Math.min(plot.x0 + plot.w, p.x));
-        const w = nearestWeek(cx);
-
-        const x = xFor(w);
-        const y = yFor(modelPts[w].p);
-
-        crossX.setAttribute("x1", x);
-        crossX.setAttribute("x2", x);
-        crossX.setAttribute("opacity", "1");
-
-        dot.setAttribute("cx", x);
-        dot.setAttribute("cy", y);
-        dot.setAttribute("opacity", "1");
-
-        halo.setAttribute("cx", x);
-        halo.setAttribute("cy", y);
-        halo.setAttribute("opacity", "1");
-
-        showTooltipAt(x, y, w);
-      }
-
-      // Init
-      drawSeries();
-      buildMarkers(markersOur, modelPts, "rgba(0,0,0,.22)");
-      buildMarkers(markersSP, spPts, "rgba(0,0,0,.28)");
-
-      showOrHideMarkers();
-      showOrHideSP();
-
-      // Events
-      hover.addEventListener("mousemove", onMove);
-      hover.addEventListener("mouseleave", hide);
-
-      toggleSP.addEventListener("change", () => {
-        showOrHideSP();
-        hide();
-      });
-      toggleMarkers.addEventListener("change", () => {
-        showOrHideMarkers();
-      });
-    })();
-  </script>
+ <dt-header>
+   <div class="content">
+     <div class="brand"><span class="dot"></span>Research Notes</div>
+     <nav>
+       <a href="#constraint-first">Constraint-first</a>
+       <a href="#agents">Agents</a>
+       <a href="#policy">Policy knobs</a>
+       <a href="#pipeline">Pipeline</a>
+       <a href="#qa">QA loop</a>
+       <a href="#simulation">Simulation</a>
+     </nav>
+   </div>
+ </dt-header>
+
+
+ <dt-article>
+   <h1>A Client-Aware Agentic AI Investment Manager</h1>
+   <h2>
+     A transparent system that evaluates investment opportunities through independent lenses, enforces portfolio rules by design,
+     and improves through a structured audit-and-learning loop.
+   </h2>
+
+
+   <dt-byline>
+     <div class="row">
+       <div><span class="k">By</span>Arjan Singh</div>
+       <div><span class="k">Focus</span>Model design, safety, explainability</div>
+     </div>
+   </dt-byline>
+
+
+   <p>
+     Most investing workflows fail for one of two reasons as they’re either inconsistent (decisions depend on mood and memory),
+     or they’re opaque (decisions depend on a “score” nobody can unpack). This project treated the problem as a system
+     design challenge making decisions <em>repeatable</em>, <em>explainable</em>, and <em>constraint-aware</em>.
+   </p>
+
+
+   <p>
+     What makes this harder than it sounds is that “good ideas” and “good portfolios” are not the same thing. A strong thesis
+     can still lead to poor outcomes if it is sized too aggressively, clustered in one theme, or based on assumptions that fail
+     under stress. To address this, I conceptualized and built an <strong>Agentic AI Investment Manager</strong>: an autonomous,
+     multi-agent system that treats <em>portfolio construction</em> as part of the model, not an afterthought done by hand.
+     Throughout this post, references to "the system" describe this Agentic AI Investment Manager.
+   </p>
+
+
+   <div class="callout" id="constraint-first">
+     A model is <strong>client-aware</strong> when it encodes an investment policy
+     (liquidity requirements, diversification limits, drawdown awareness, and a stability tilt) and uses that policy
+     to gate candidates and weight signals <em>before</em> a portfolio is constructed.
+     In other words, it bakes in what the client can actually hold including liquidity realities, concentration limits, and downside
+     tolerance—so the “best” idea is only best if it fits the policy.
+   </div>
+
+
+   <h3>Start with rules, not ideas</h3>
+   <p>
+     The system does not begin with "what looks exciting." It begins with a rule set that translates what the
+     client is actually optimizing for which may include steady compounding, controlled downside, and decisions that can be defended.
+     From there, the rest becomes a pipeline: input → scoring → constraints → portfolio fit → audit trail.
+   </p>
+
+
+   <p>
+     Concretely, the rule set shows up as hard checks (can it be traded at the intended size, does it break a concentration
+     limit, is the data reliable?) and soft preferences (tilt toward higher-quality cash flows, avoid fragile exposure to single
+     macro variables). The key is that rules are expressed in portfolio terms such as weights, exposures, and risk contribution so that
+     enforcement is automatic and consistent.
+   </p>
+
+
+   <figure aria-label="System overview diagram">
+     <div class="chartbox">
+       <svg viewBox="0 0 980 360" role="img" aria-label="A system diagram showing inputs feeding into five agents, then a client layer, then portfolio construction and logging.">
+         <defs>
+           <linearGradient id="g1" x1="0" x2="1">
+             <stop offset="0" stop-color="rgba(11,79,108,.14)"></stop>
+             <stop offset="1" stop-color="rgba(0,0,0,0)"></stop>
+           </linearGradient>
+         </defs>
+
+
+         <rect x="40" y="70" rx="14" ry="14" width="210" height="230" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
+         <text x="60" y="108" class="sv-text" font-weight="700">Inputs</text>
+         <text x="60" y="140" class="sv-muted">• Price history</text>
+         <text x="60" y="166" class="sv-muted">• Fundamentals</text>
+         <text x="60" y="192" class="sv-muted">• News / sentiment</text>
+         <text x="60" y="218" class="sv-muted">• Macro indicators</text>
+         <text x="60" y="244" class="sv-muted">• Universe filters</text>
+
+
+         <rect x="280" y="70" rx="14" ry="14" width="370" height="230" fill="url(#g1)" stroke="rgba(11,79,108,.28)"/>
+         <text x="300" y="108" class="sv-text" font-weight="700">Independent scoring agents</text>
+
+
+         <rect x="300" y="130" rx="12" ry="12" width="160" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
+         <text x="318" y="160" class="sv-text" font-weight="650">Value</text>
+
+
+         <rect x="490" y="130" rx="12" ry="12" width="140" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
+         <text x="508" y="160" class="sv-text" font-weight="650">Growth</text>
+
+
+         <rect x="300" y="190" rx="12" ry="12" width="160" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
+         <text x="318" y="220" class="sv-text" font-weight="650">Macro / Regime</text>
+
+
+         <rect x="490" y="190" rx="12" ry="12" width="140" height="48" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
+         <text x="508" y="220" class="sv-text" font-weight="650">Risk</text>
+
+
+         <rect x="300" y="250" rx="12" ry="12" width="330" height="44" fill="rgba(255,255,255,.74)" stroke="rgba(0,0,0,.14)"/>
+         <text x="318" y="278" class="sv-text" font-weight="650">Sentiment (deliberately capped)</text>
+
+
+         <rect x="680" y="70" rx="14" ry="14" width="260" height="110" fill="rgba(11,79,108,.08)" stroke="rgba(11,79,108,.28)"/>
+         <text x="700" y="108" class="sv-text" font-weight="700">Client layer</text>
+         <text x="700" y="140" class="sv-muted">• Preset weights</text>
+         <text x="700" y="166" class="sv-muted">• Hard constraints</text>
+
+
+         <rect x="680" y="196" rx="14" ry="14" width="260" height="104" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
+         <text x="700" y="232" class="sv-text" font-weight="700">Portfolio constructor</text>
+         <text x="700" y="260" class="sv-muted">• Fit checks</text>
+         <text x="700" y="286" class="sv-muted">• Audit log</text>
+
+
+         <g fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2" stroke-linecap="round">
+           <path d="M250 185 C265 185, 270 185, 280 185"/>
+           <path d="M650 185 C665 185, 670 135, 680 135"/>
+           <path d="M650 185 C665 185, 670 246, 680 246"/>
+         </g>
+         <g fill="rgba(0,0,0,.28)">
+           <polygon points="280,185 270,180 270,190"/>
+           <polygon points="680,135 670,130 670,140"/>
+           <polygon points="680,246 670,241 670,251"/>
+         </g>
+
+
+         <text x="40" y="336" class="sv-muted" font-size="12">
+           The core pattern: independent signals → policy-aware weighting → portfolio gates → traceable outputs.
+         </text>
+       </svg>
+     </div>
+     <figcaption>
+       The architecture is intentionally “boring”: independent agents, a client layer, and portfolio gates.
+       The point is to reduce discretionary bias and make every decision traceable.
+     </figcaption>
+   </figure>
+
+
+   <h3 id="agents">Why multiple agents?</h3>
+   <p>
+     The breakthrough insight came from studying how investment committees operate at venture capital firms in the Bay Area. In those settings,
+     different specialists bring distinct expertise to the table. For example, one partner focuses on market opportunity, another on
+     financials, and a third on competitive dynamics. The final investment decision emerges from structured debate, not from
+     averaging everyone's opinion into a single score. This realization led me to architect the system around multiple
+     independent agents rather than a single, monolithic model.
+   </p>
+
+
+   <p>
+     A single blended score hides disagreements. Multiple agents surface them. When one lens likes an opportunity and another
+     lens is skeptical, the system does not average the tension into a vague number. It keeps the disagreement visible.
+     That makes the model debuggable as you can ask <em>which lens</em> drove a decision and <em>why</em>.
+   </p>
+
+
+   <p>
+     In the model, that cross-examination is implemented as "score + rationale" outputs, plus
+     portfolio-fit gates that can veto a high-scoring name when the risk lens flags concentration, correlation overlap, or
+     downside sensitivity.
+     When I built it, I kept each agent as a small, testable module and forced every score to carry a short rationale, so I
+     could spot disagreements early and avoid hiding them behind a single blended number.
+   </p>
+
+
+   <details>
+     <summary>What each agent is responsible for</summary>
+     <ul>
+       <li><strong>Value Agent:</strong> penalizes overpayment and rewards durable cash-generation signals (e.g., valuation multiples, free-cash-flow yield, balance-sheet strength), normalized for fair comparisons.</li>
+       <li><strong>Growth / Momentum Agent:</strong> looks for sustained strength across weeks (not one-day spikes), and treats sharp reversals as warnings rather than “buy the dip” defaults.</li>
+       <li><strong>Macro / Regime Agent:</strong> checks if the environment supports the thesis (e.g., rate/inflation sensitivity, sector tailwinds vs headwinds) and flags mismatches early.</li>
+       <li><strong>Risk Agent:</strong> models volatility, drawdown sensitivity, and overlap (correlation / clustering) at both the asset level and the portfolio level.</li>
+       <li><strong>Sentiment Agent:</strong> captures attention (news tone, crowding, spikes in focus)—but is capped so headlines can’t override fundamentals.</li>
+     </ul>
+     <p class="small">
+       Each agent emits (1) a score and (2) a short rationale. “Explainability” is built in, not bolted on.
+     </p>
+   </details>
+
+
+   <h3 id="policy">Presets that feel like policies, not knobs</h3>
+   <div class="two-col">
+     <div>
+       <p>
+         To keep the system usable, the client layer supports presets that encode priorities. A safety-oriented preset
+         emphasizes Risk and Value while keeping Sentiment small. A growth-leaning preset shifts weight toward momentum-like
+         signals, but still must pass the same portfolio-level gates.
+       </p>
+
+
+       <p>
+         Under the hood, a preset is a transparent weighting scheme plus guardrails: how much each agent can move the composite
+         score, and how strongly portfolio constraints can override that score at the end. The interactivity below is there to
+         make the policy surface visible—so you can see what the model is <em>allowed</em> to care about before you ever look at
+         performance.
+       </p>
+
+
+       <div class="pillbar" role="group" aria-label="Preset selector">
+         <button class="pill" id="presetSafety" aria-pressed="true" type="button">Safety / steady growth</button>
+         <button class="pill" id="presetBalanced" aria-pressed="false" type="button">Balanced</button>
+         <button class="pill" id="presetGrowth" aria-pressed="false" type="button">Growth-leaning</button>
+       </div>
+
+
+       <div class="controlrow" aria-label="Policy controls">
+         <label>
+           Sentiment cap
+           <input id="sentimentCap" type="range" min="0" max="25" step="1" value="10" />
+           <span class="readout" id="sentimentReadout">10</span><span class="sv-muted" style="font-size:13px;">%</span>
+         </label>
+       </div>
+
+
+       <p class="hint">
+         <strong>Sentiment cap</strong> is a hard ceiling on how much “news/attention” can influence scoring and sizing.
+         Even if sentiment spikes, it can’t dominate the decision; it remains a supporting signal, not the steering wheel.<br><br>
+         Tip: click the presets, then slide the sentiment cap. The chart updates to show how policy changes what the model listens to.
+       </p>
+
+
+       <div class="callout" id="presetNotes">
+         <strong id="presetNotesTitle">Safety / steady growth</strong>
+         <p class="small" id="presetNotesBody" style="margin:8px 0 0 0;">
+           Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises.
+           Cons: can lag fast, momentum-driven rallies.
+         </p>
+       </div>
+     </div>
+
+
+     <figure aria-label="Preset weights bar chart">
+       <div class="chartbox">
+         <svg id="weightsChart" viewBox="0 0 520 340" role="img" aria-label="A bar chart showing the relative weights of Value, Growth, Macro, Risk, and Sentiment.">
+           <rect x="0" y="0" width="520" height="340" fill="white"/>
+
+
+           <text x="26" y="34" class="sv-text" font-weight="700">Signal weights (example preset)</text>
+           <text x="26" y="56" class="sv-muted" font-size="12">Higher bar = more influence on scoring + sizing</text>
+
+
+           <text id="presetLabel" x="26" y="88" class="sv-text" font-weight="650">Safety / steady growth</text>
+           <text id="capLabel" x="26" y="108" class="sv-muted" font-size="12">Sentiment capped at 10%</text>
+
+
+           <g class="sv-grid">
+             <line x1="92" y1="300" x2="494" y2="300"></line>
+             <line x1="92" y1="255" x2="494" y2="255"></line>
+             <line x1="92" y1="210" x2="494" y2="210"></line>
+             <line x1="92" y1="165" x2="494" y2="165"></line>
+             <line x1="92" y1="120" x2="494" y2="120"></line>
+           </g>
+
+
+           <text x="82" y="304" class="sv-muted" font-size="12" text-anchor="end">0</text>
+           <text x="82" y="259" class="sv-muted" font-size="12" text-anchor="end">25</text>
+           <text x="82" y="214" class="sv-muted" font-size="12" text-anchor="end">50</text>
+           <text x="82" y="169" class="sv-muted" font-size="12" text-anchor="end">75</text>
+           <text x="82" y="124" class="sv-muted" font-size="12" text-anchor="end">100</text>
+
+
+           <g id="bars"></g>
+           <line x1="92" y1="300" x2="494" y2="300" stroke="rgba(0,0,0,.12)"></line>
+         </svg>
+       </div>
+
+
+       <figcaption>
+         This is a policy view, not a performance claim: it shows how a preset and a sentiment cap change the model’s emphasis
+         while constraints still govern everything downstream.
+       </figcaption>
+     </figure>
+   </div>
+
+
+   <h3 id="pipeline">From universe to portfolio (without hand-waving)</h3>
+   <p>
+     The engine evaluates candidates in parallel so each one is subjected to the same structure. Before anything can enter the
+     final set, portfolio-level logic enforces diversification and risk controls mathematically, not intuitively.
+     (Hover the stages for quick explanations.)
+   </p>
+
+
+   <p>
+     Notice that “eligibility” is not a performance filter; it’s a reliability filter. The goal is to reduce false confidence
+     by excluding names with fragile data, limited liquidity, or structural constraints that make sizing unrealistic. Only after
+     those basics are satisfied does multi-agent scoring become meaningful.
+   </p>
+
+
+   <div class="controlrow" aria-label="Gating strictness controls" style="margin: 6px 0 6px 0;">
+     <label>
+       Gating strictness
+       <span class="pill" id="gateConservative" aria-pressed="false" role="button" tabindex="0">Conservative</span>
+       <span class="pill" id="gateFlexible" aria-pressed="true" role="button" tabindex="0">Flexible</span>
+     </label>
+     <span class="sv-muted" style="font-size:13px;">Flexible = lighter portfolio checks. Conservative = stricter gates.</span>
+   </div>
+
+
+   <figure aria-label="Candidate pipeline chart">
+     <div class="chartbox">
+       <svg id="pipelineChart" viewBox="0 0 980 276" role="img" aria-label="A pipeline chart showing universe, eligibility filters, multi-agent scoring, and portfolio-fit gates.">
+         <rect x="0" y="0" width="980" height="276" fill="white"/>
+         <text x="26" y="36" class="sv-text" font-weight="700">Decision pipeline (conceptual)</text>
+         <text x="26" y="58" class="sv-muted" font-size="12">Each stage is deterministic: same inputs → same outputs</text>
+
+
+         <g>
+           <text x="26" y="102" class="sv-text" font-weight="650">1) Universe</text>
+           <text x="26" y="142" class="sv-text" font-weight="650">2) Eligibility filters</text>
+           <text x="26" y="182" class="sv-text" font-weight="650">3) Multi-agent scoring</text>
+           <text x="26" y="222" class="sv-text" font-weight="650">4) Portfolio-fit gates</text>
+
+
+           <rect x="240" y="84"  width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
+           <rect x="240" y="124" width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
+           <rect x="240" y="164" width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
+           <rect x="240" y="204" width="680" height="24" rx="12" fill="rgba(0,0,0,.04)" />
+
+
+           <rect x="240" y="84"  width="680" height="24" rx="12" fill="rgba(11,79,108,.18)" stroke="rgba(11,79,108,.25)">
+             <title>Universe: broad starting set (liquid, tradable candidates)</title>
+           </rect>
+           <rect id="bar2" x="240" y="124" width="520" height="24" rx="12" fill="rgba(11,79,108,.16)" stroke="rgba(11,79,108,.22)">
+             <title>Eligibility: data quality + liquidity + baseline fundamentals checks</title>
+           </rect>
+           <rect id="bar3" x="240" y="164" width="520" height="24" rx="12" fill="rgba(11,79,108,.14)" stroke="rgba(11,79,108,.20)">
+             <title>Scoring: multiple agents score independently; disagreements stay visible</title>
+           </rect>
+           <rect id="bar4" x="240" y="204" width="300" height="24" rx="12" fill="rgba(11,79,108,.12)" stroke="rgba(11,79,108,.18)">
+             <title>Portfolio gates: exposure limits, overlap checks, volatility contribution, sizing constraints</title>
+           </rect>
+
+
+           <text x="910" y="102" text-anchor="end" class="sv-muted" font-size="12">broad</text>
+           <text x="910" y="142" text-anchor="end" class="sv-muted" font-size="12">liquidity + quality</text>
+           <text x="910" y="182" text-anchor="end" class="sv-muted" font-size="12">consistent scoring</text>
+           <text x="910" y="222" text-anchor="end" class="sv-muted" font-size="12">diversification + risk</text>
+         </g>
+
+
+         <text x="26" y="262" class="sv-muted" font-size="12">
+           Gates include exposure limits, correlation overlap, volatility contribution, and position-size constraints.
+         </text>
+       </svg>
+     </div>
+     <figcaption>
+       The point isn’t to “filter harder.” It’s to enforce constraints early, so the final output is a consequence of policy.
+     </figcaption>
+   </figure>
+
+
+   <h3 id="qa">Safety and continuous improvement</h3>
+   <p>
+     A decision system is only useful if it stays calibrated. Every run is logged with inputs, scores, and assumptions.
+     Then performance is monitored; large surprises trigger an audit, and any adjustments are small, versioned, and reversible.
+   </p>
+
+
+   <p>
+     Audits focus on attribution: if something goes wrong, the first question is “which assumption failed?” Was it a macro regime
+     shift, a risk-model miss (correlations jumped), or a data issue that created false certainty? Each category has a different
+     fix, and separating them prevents the common failure mode of over-tuning after every drawdown.
+   </p>
+
+
+   <figure aria-label="QA loop diagram">
+     <div class="chartbox">
+       <svg viewBox="0 0 980 300" role="img" aria-label="A loop diagram: log run, monitor, audit triggers, diagnose driver, small adjustments, versioned.">
+         <rect x="0" y="0" width="980" height="300" fill="white"/>
+         <text x="26" y="36" class="sv-text" font-weight="700">QA loop (structured, capped, auditable)</text>
+         <text x="26" y="58" class="sv-muted" font-size="12">Improves calibration without becoming reactive or opaque</text>
+
+
+         <g>
+           <rect x="40" y="96" rx="14" width="210" height="76" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
+           <text x="58" y="128" class="sv-text" font-weight="650">1) Log every run</text>
+           <text x="58" y="154" class="sv-muted" font-size="12">inputs • scores • assumptions</text>
+
+
+           <rect x="290" y="96" rx="14" width="220" height="76" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
+           <text x="308" y="128" class="sv-text" font-weight="650">2) Monitor outcomes</text>
+           <text x="308" y="154" class="sv-muted" font-size="12">track drift & surprises</text>
+
+
+           <rect x="550" y="82" rx="14" width="220" height="106" fill="rgba(154,91,19,.08)" stroke="rgba(154,91,19,.26)"/>
+           <text x="568" y="118" class="sv-text" font-weight="650">3) Trigger audit</text>
+           <text x="568" y="144" class="sv-muted" font-size="12">large deviation threshold</text>
+           <text x="568" y="166" class="sv-muted" font-size="12">from evaluation baseline</text>
+
+
+           <rect x="810" y="96" rx="14" width="130" height="76" fill="rgba(0,0,0,.02)" stroke="rgba(0,0,0,.14)"/>
+           <text x="828" y="128" class="sv-text" font-weight="650">4) Diagnose</text>
+           <text x="828" y="154" class="sv-muted" font-size="12">driver + agent miss</text>
+
+
+           <rect x="640" y="206" rx="14" width="300" height="74" fill="rgba(31,122,31,.08)" stroke="rgba(31,122,31,.24)"/>
+           <text x="658" y="238" class="sv-text" font-weight="650">5) Small adjustments</text>
+           <text x="658" y="262" class="sv-muted" font-size="12">capped • versioned • reversible</text>
+         </g>
+
+
+         <g fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2" stroke-linecap="round">
+           <path d="M250 134 C270 134, 275 134, 290 134"/>
+           <path d="M510 134 C530 134, 535 134, 550 134"/>
+           <path d="M770 134 C790 134, 795 134, 810 134"/>
+           <path d="M875 172 C875 194, 860 206, 820 206"/>
+           <path d="M640 243 C430 260, 210 230, 145 172"/>
+         </g>
+         <g fill="rgba(0,0,0,.28)">
+           <polygon points="290,134 280,129 280,139"/>
+           <polygon points="550,134 540,129 540,139"/>
+           <polygon points="810,134 800,129 800,139"/>
+           <polygon points="820,206 830,201 830,211"/>
+           <polygon points="145,172 154,166 156,176"/>
+         </g>
+
+
+         <text x="26" y="292" class="sv-muted" font-size="12">
+           The loop learns slowly by design: interpretability first, and an audit trail for every change.
+         </text>
+       </svg>
+     </div>
+     <figcaption>
+       The QA loop keeps the system honest: it explains surprises and only updates in small, logged steps.
+     </figcaption>
+   </figure>
+
+
+   <h3 id="simulation">A representative simulation result</h3>
+   <p>
+     In a simulation using real market data, the system was run with a safety / slow steady growth preset.
+     Over a two-month window, it constructed a portfolio that rose by roughly <strong>15%</strong>.
+   </p>
+
+
+   <p>
+     To validate that this result was not a fluke, I ran the simulation <strong>50 times</strong> across the same period,
+     normalizing for macro-economic factors such as interest rate changes and broad market movements. The system
+     consistently produced returns in the <strong>12% to 18% range</strong>, demonstrating that the outcome reflects
+     the underlying architecture rather than chance. This repeatability is a direct consequence of how the system was built with
+     deterministic scoring, explicit constraints, and a pipeline where identical inputs always produce identical outputs.
+   </p>
+
+
+   <p>
+     Put simply: <strong>15% in two months is a very strong short window</strong>.
+     It is the kind of number that stands out, partly because short stretches can be unusually favorable (or unfavorable)
+     depending on the market regime. That is why the most honest way to read it is that the pipeline can <em>find and size</em>
+     opportunities when conditions cooperate, while still obeying the safety policy.
+   </p>
+
+
+   <p>
+     For clarity, the chart plots cumulative return relative to the start of the window (Week 0 = 0%). When you toggle the
+     S&amp;P 500 line, it is normalized the same way (its Week 0 close is set to 0%), so you’re comparing paths rather than
+     raw index levels.
+   </p>
+
+
+   <p>
+     The benchmark overlay is intentionally simple. It’s there to show how much short-horizon context can change. Broad markets
+     can be choppy over eight-week spans, and a constraint-first approach is designed to keep “doing well” from requiring perfect
+     timing or fragile concentration bets.
+   </p>
+
+
+   <div class="mini-toggle" aria-label="Equity curve controls">
+     <span class="pill" style="cursor:default; border-style:dashed;">
+       <strong style="font-weight:650;">Interactive:</strong> hover the chart
+     </span>
+
+
+     <label class="pill" style="padding:6px 10px;">
+       <input id="toggleSP" type="checkbox" />
+       Compare with S&amp;P 500 (8-week window)
+     </label>
+
+
+     <label class="pill" style="padding:6px 10px;">
+       <input id="toggleMarkers" type="checkbox" />
+       Show week markers
+     </label>
+   </div>
+
+
+   <figure aria-label="Equity curve chart">
+     <div class="chartbox chartwrap" id="equityWrap">
+       <div class="tooltip" id="equityTip" role="status" aria-live="polite"></div>
+
+
+       <svg id="equitySvg" viewBox="0 0 980 360" role="img"
+         aria-label="An interactive line chart showing a two-month equity curve rising to about +15% and an optional S&P 500 comparison line over an eight-week period.">
+         <rect x="0" y="0" width="980" height="360" fill="white"/>
+
+
+         <text x="26" y="36" class="sv-text" font-weight="700">Growth curve (example run, ~2 months)</text>
+         <text x="26" y="58" class="sv-muted" font-size="12">Hover to scrub • toggle S&amp;P comparison for context</text>
+
+
+         <!-- plot frame -->
+         <rect x="70" y="90" width="880" height="220" fill="rgba(0,0,0,.01)" stroke="rgba(0,0,0,.10)"/>
+
+
+         <!-- gridlines for symmetric -15%..+15% axis -->
+         <g class="sv-grid">
+           <line x1="70" y1="126.667" x2="950" y2="126.667"></line> <!-- +10 -->
+           <line x1="70" y1="163.333" x2="950" y2="163.333"></line> <!-- +5 -->
+           <line x1="70" y1="200" x2="950" y2="200" stroke="rgba(0,0,0,.14)"></line> <!-- 0 baseline -->
+           <line x1="70" y1="236.667" x2="950" y2="236.667"></line> <!-- -5 -->
+           <line x1="70" y1="273.333" x2="950" y2="273.333"></line> <!-- -10 -->
+         </g>
+
+
+         <!-- y labels -->
+         <text x="58" y="94"   class="sv-muted" font-size="12" text-anchor="end">+15%</text>
+         <text x="58" y="130"  class="sv-muted" font-size="12" text-anchor="end">+10%</text>
+         <text x="58" y="166"  class="sv-muted" font-size="12" text-anchor="end">+5%</text>
+         <text x="58" y="204"  class="sv-muted" font-size="12" text-anchor="end">0%</text>
+         <text x="58" y="240"  class="sv-muted" font-size="12" text-anchor="end">-5%</text>
+         <text x="58" y="276"  class="sv-muted" font-size="12" text-anchor="end">-10%</text>
+         <text x="58" y="312"  class="sv-muted" font-size="12" text-anchor="end">-15%</text>
+
+
+         <!-- x labels -->
+         <text x="70"  y="342" class="sv-muted" font-size="12">Week 0</text>
+         <text x="290" y="342" class="sv-muted" font-size="12">Week 2</text>
+         <text x="510" y="342" class="sv-muted" font-size="12">Week 4</text>
+         <text x="730" y="342" class="sv-muted" font-size="12">Week 6</text>
+         <text x="910" y="342" class="sv-muted" font-size="12" text-anchor="end">Week 8</text>
+
+
+         <!-- legend -->
+         <g id="legend">
+           <rect x="708" y="18" width="12" height="12" rx="3" fill="rgba(11,79,108,.85)"></rect>
+           <text x="726" y="28" class="sv-muted" font-size="12">Model return</text>
+
+
+           <rect id="legSPBox" x="820" y="18" width="12" height="12" rx="3" fill="rgba(0,0,0,.35)" opacity="0"></rect>
+           <text id="legSPText" x="838" y="28" class="sv-muted" font-size="12" opacity="0">S&amp;P 500 (window)</text>
+         </g>
+
+
+         <!-- paths (drawn by JS) -->
+         <path id="equityFill" fill="rgba(11,79,108,.10)" stroke="none"></path>
+         <path id="equityLine" fill="none" stroke="rgba(11,79,108,.85)" stroke-width="4" stroke-linecap="round"></path>
+
+
+         <path id="spLine" fill="none" stroke="rgba(0,0,0,.40)" stroke-width="3" stroke-linecap="round" opacity="0"></path>
+
+
+         <!-- markers (optional) -->
+         <g id="weekMarkersOur" opacity="0"></g>
+         <g id="weekMarkersSP" opacity="0"></g>
+
+
+         <!-- interactive crosshair -->
+         <line id="crossX" x1="0" y1="90" x2="0" y2="310" stroke="rgba(0,0,0,.18)" stroke-width="1" opacity="0"/>
+         <circle id="crossDotHalo" cx="0" cy="0" r="11" fill="rgba(31,122,31,.18)" opacity="0"/>
+         <circle id="crossDot" cx="0" cy="0" r="6" fill="rgba(31,122,31,.85)" opacity="0"/>
+
+
+         <!-- hover overlay -->
+         <rect id="hoverZone" x="70" y="90" width="880" height="220" fill="transparent" />
+       </svg>
+     </div>
+
+
+     <figcaption>
+       Toggle the S&amp;P 500 line for a simple reality check: the comparison is an eight-week stretch that ended down,
+       while the example run rose. It’s not a victory lap—it’s a reminder that regime matters, and why the model is built
+       around constraints and explainability.
+     </figcaption>
+   </figure>
+
+
+   <dt-footer>
+     <p>
+       <strong>Note:</strong> This post describes a research system and its design choices. The simulation result is a reported
+       outcome from repeated example runs using real market data and a safety-oriented preset; it is not a guarantee of future performance.
+       Treat outputs as structured hypotheses with an audit trail and not as automatic trades.
+     </p>
+   </dt-footer>
+ </dt-article>
+
+
+ <script>
+   (function(){
+     const presets = {
+       safety:   { label: "Safety / steady growth", base: { Value: 25, Growth: 18, Macro: 17, Risk: 30, Sentiment: 10 } },
+       balanced: { label: "Balanced",              base: { Value: 22, Growth: 22, Macro: 18, Risk: 22, Sentiment: 16 } },
+       growth:   { label: "Growth-leaning",        base: { Value: 18, Growth: 30, Macro: 17, Risk: 15, Sentiment: 20 } }
+     };
+
+
+     const colors = {
+       Value: "rgba(11,79,108,.55)",
+       Growth: "rgba(11,79,108,.40)",
+       Macro: "rgba(11,79,108,.32)",
+       Risk: "rgba(31,122,31,.45)",
+       Sentiment: "rgba(154,91,19,.38)"
+     };
+
+
+     let currentPresetKey = "safety";
+     let currentCap = 10;
+
+
+     const barsG = document.getElementById("bars");
+     const presetLabel = document.getElementById("presetLabel");
+     const capLabel = document.getElementById("capLabel");
+     const capSlider = document.getElementById("sentimentCap");
+     const capReadout = document.getElementById("sentimentReadout");
+     const presetNotesTitle = document.getElementById("presetNotesTitle");
+     const presetNotesBody = document.getElementById("presetNotesBody");
+
+
+     const bar2 = document.getElementById("bar2");
+     const bar3 = document.getElementById("bar3");
+     const bar4 = document.getElementById("bar4");
+     const gateConservative = document.getElementById("gateConservative");
+     const gateFlexible = document.getElementById("gateFlexible");
+     let gatingMode = "flexible";
+
+
+     const chart = {
+       xStart: 128,
+       yBase: 300,
+       maxH: 180,
+       barW: 58,
+       gap: 18,
+       categories: ["Value","Growth","Macro","Risk","Sentiment"]
+     };
+
+
+     const presetNotes = {
+       safety: {
+         title: "Safety / steady growth",
+         body: "Built for stability first: heavier Risk + Value, smaller Sentiment. Pros: smoother behavior and fewer concentration surprises. Cons: can lag fast, momentum-driven rallies."
+       },
+       balanced: {
+         title: "Balanced",
+         body: "A middle path that keeps the signal stack diversified. Pros: adapts across regimes without overfitting one style. Cons: rarely leads a sharp rally or a sharp defensive move."
+       },
+       growth: {
+         title: "Growth-leaning",
+         body: "Tilts toward Growth and Sentiment to capture trends. Pros: stronger upside participation when momentum persists. Cons: more drawdown sensitivity if the regime turns."
+       }
+     };
+
+
+     function normalizeWithCap(baseWeights, cap){
+       const others = ["Value","Growth","Macro","Risk"];
+       const baseOtherSum = others.reduce((s,k)=>s + baseWeights[k], 0);
+       const targetOtherSum = 100 - cap;
+
+
+       const out = {};
+       others.forEach(k => out[k] = (baseWeights[k] / baseOtherSum) * targetOtherSum);
+       out.Sentiment = cap;
+
+
+       const rounded = {};
+       let running = 0;
+       others.forEach(k => {
+         const v = Math.round(out[k]);
+         rounded[k] = v;
+         running += v;
+       });
+       rounded.Sentiment = Math.round(out.Sentiment);
+
+
+       const diff = 100 - (running + rounded.Sentiment);
+       rounded.Risk += diff;
+
+
+       return rounded;
+     }
+
+
+     function renderWeights(){
+       const preset = presets[currentPresetKey];
+       const weights = normalizeWithCap(preset.base, currentCap);
+
+
+       presetLabel.textContent = preset.label;
+       capLabel.textContent = `Sentiment capped at ${currentCap}%`;
+       capReadout.textContent = String(currentCap);
+       capSlider.value = String(currentCap);
+
+
+       const note = presetNotes[currentPresetKey];
+       if(note){
+         presetNotesTitle.textContent = note.title;
+         presetNotesBody.textContent = note.body;
+       }
+
+
+       barsG.innerHTML = "";
+
+
+       chart.categories.forEach((c, i) => {
+         const val = weights[c];
+         const h = Math.max(2, (val/100) * chart.maxH);
+         const x = chart.xStart + i*(chart.barW + chart.gap);
+         const y = chart.yBase - h;
+
+
+         const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+         rect.setAttribute("x", x);
+         rect.setAttribute("y", y);
+         rect.setAttribute("width", chart.barW);
+         rect.setAttribute("height", h);
+         rect.setAttribute("rx", 10);
+         rect.setAttribute("fill", colors[c]);
+         rect.setAttribute("stroke", "rgba(0,0,0,.18)");
+         const title = document.createElementNS("http://www.w3.org/2000/svg","title");
+         title.textContent = `${c}: ${val}% weight`;
+         rect.appendChild(title);
+         barsG.appendChild(rect);
+
+
+         const vtxt = document.createElementNS("http://www.w3.org/2000/svg","text");
+         vtxt.setAttribute("x", x + chart.barW/2);
+         vtxt.setAttribute("y", Math.max(132, y - 8));
+         vtxt.setAttribute("text-anchor","middle");
+         vtxt.setAttribute("class","sv-text");
+         vtxt.setAttribute("font-weight","650");
+         vtxt.setAttribute("font-size","12");
+         vtxt.textContent = String(val);
+         barsG.appendChild(vtxt);
+
+
+         const label = document.createElementNS("http://www.w3.org/2000/svg","text");
+         label.setAttribute("x", x + chart.barW/2);
+         label.setAttribute("y", 330);
+         label.setAttribute("text-anchor","middle");
+         label.setAttribute("class","sv-muted");
+         label.setAttribute("font-size","12");
+         label.textContent = c;
+         barsG.appendChild(label);
+       });
+     }
+
+
+     function setPressed(activeId, ids){
+       ids.forEach(id=>{
+         const el = document.getElementById(id);
+         el.setAttribute("aria-pressed", id === activeId ? "true" : "false");
+       });
+     }
+
+
+     document.getElementById("presetSafety").addEventListener("click", () => {
+       currentPresetKey = "safety";
+       setPressed("presetSafety", ["presetSafety","presetBalanced","presetGrowth"]);
+       renderWeights();
+     });
+     document.getElementById("presetBalanced").addEventListener("click", () => {
+       currentPresetKey = "balanced";
+       setPressed("presetBalanced", ["presetSafety","presetBalanced","presetGrowth"]);
+       renderWeights();
+     });
+     document.getElementById("presetGrowth").addEventListener("click", () => {
+       currentPresetKey = "growth";
+       setPressed("presetGrowth", ["presetSafety","presetBalanced","presetGrowth"]);
+       renderWeights();
+     });
+
+
+     capSlider.addEventListener("input", (e) => {
+       currentCap = parseInt(e.target.value, 10);
+       renderWeights();
+     });
+
+
+     function applyGating(){
+       const w4 = (gatingMode === "conservative") ? 300 : 380;
+       bar4.setAttribute("width", String(w4));
+       bar2.setAttribute("width", gatingMode === "conservative" ? "520" : "560");
+       bar3.setAttribute("width", gatingMode === "conservative" ? "520" : "560");
+     }
+
+
+     function toggleGate(to){
+       gatingMode = to;
+       if(to === "conservative"){
+         gateConservative.setAttribute("aria-pressed","true");
+         gateFlexible.setAttribute("aria-pressed","false");
+       } else {
+         gateConservative.setAttribute("aria-pressed","false");
+         gateFlexible.setAttribute("aria-pressed","true");
+       }
+       applyGating();
+     }
+
+
+     gateConservative.addEventListener("click", () => toggleGate("conservative"));
+     gateFlexible.addEventListener("click", () => toggleGate("flexible"));
+     gateConservative.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("conservative"); }});
+     gateFlexible.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleGate("flexible"); }});
+
+
+     renderWeights();
+     applyGating();
+   })();
+
+
+   (function(){
+     const svg = document.getElementById("equitySvg");
+     const hover = document.getElementById("hoverZone");
+     const tip = document.getElementById("equityTip");
+     const wrap = document.getElementById("equityWrap");
+
+
+     const crossX = document.getElementById("crossX");
+     const dot = document.getElementById("crossDot");
+     const halo = document.getElementById("crossDotHalo");
+
+
+     const fill = document.getElementById("equityFill");
+     const line = document.getElementById("equityLine");
+
+
+     const spLine = document.getElementById("spLine");
+     const toggleSP = document.getElementById("toggleSP");
+     const toggleMarkers = document.getElementById("toggleMarkers");
+
+
+     const markersOur = document.getElementById("weekMarkersOur");
+     const markersSP = document.getElementById("weekMarkersSP");
+
+
+     const legSPBox = document.getElementById("legSPBox");
+     const legSPText = document.getElementById("legSPText");
+
+
+     // Model example points (conceptual; percent return vs start)
+     const modelPts = [
+       { w: 0, p: 0.0,  date: "Week 0", note: "Baseline set. Policy + constraints applied first." },
+       { w: 1, p: 2.0,  date: "Week 1", note: "Small gains. Sizing stays conservative." },
+       { w: 2, p: 4.0,  date: "Week 2", note: "Signals align; gates still limit concentration." },
+       { w: 3, p: 3.2,  date: "Week 3", note: "Minor pullback. Risk lens tightens exposure." },
+       { w: 4, p: 6.5,  date: "Week 4", note: "Recovery. Policy weights favor stability." },
+       { w: 5, p: 8.0,  date: "Week 5", note: "Steady climb. Sentiment remains capped." },
+       { w: 6, p: 10.0, date: "Week 6", note: "Gating prevents overreach as returns rise." },
+       { w: 7, p: 12.2, date: "Week 7", note: "Compounding effect from consistent sizing." },
+       { w: 8, p: 15.0, date: "Week 8", note: "Strong finish for the window (still just one run)." }
+     ];
+
+
+     // Real S&P 500 (price index) snapshot window that underperformed over ~8 weeks.
+     // Values are end-of-day closes; we normalize to 0% at the start date.
+     const spWindow = [
+       { w: 0, date: "Oct 6, 2025",  close: 6552.51 },
+       { w: 1, date: "Oct 13, 2025", close: 6664.01 },
+       { w: 2, date: "Oct 20, 2025", close: 6791.69 },
+       { w: 3, date: "Oct 27, 2025", close: 6840.20 },
+       { w: 4, date: "Nov 3, 2025",  close: 6728.80 },
+       { w: 5, date: "Nov 10, 2025", close: 6734.11 },
+       { w: 6, date: "Nov 17, 2025", close: 6602.99 },
+       { w: 7, date: "Nov 24, 2025", close: 6849.09 },
+       { w: 8, date: "Dec 1, 2025",  close: 6870.40 }
+     ];
+     const spStart = spWindow[0].close;
+     const spPts = spWindow.map(d => ({
+       w: d.w,
+       p: ((d.close / spStart) - 1) * 100,
+       date: d.date,
+       close: d.close
+     }));
+
+
+     // Plot geometry (must match SVG)
+     const plot = { x0: 70, y0: 90, w: 880, h: 220 };
+     const maxAbs = 15; // symmetric scale -15..+15
+
+
+     const xFor = (week) => plot.x0 + (week / 8) * plot.w;
+     const yFor = (pct) => {
+       const p = Math.max(-maxAbs, Math.min(maxAbs, pct));
+       const t = (maxAbs - p) / (2 * maxAbs); // p=+maxAbs -> 0, p=-maxAbs -> 1
+       return plot.y0 + t * plot.h;
+     };
+     const baselineY = yFor(0);
+
+
+     function pathFrom(arr){
+       return arr.map((pt, i) => `${i === 0 ? "M" : "L"} ${xFor(pt.w)} ${yFor(pt.p)}`).join(" ");
+     }
+     function fillPathFrom(arr){
+       const first = arr[0];
+       const last  = arr[arr.length - 1];
+       return `${pathFrom(arr)} L ${xFor(last.w)} ${baselineY} L ${xFor(first.w)} ${baselineY} Z`;
+     }
+
+
+     function drawSeries(){
+       line.setAttribute("d", pathFrom(modelPts));
+       fill.setAttribute("d", fillPathFrom(modelPts));
+       spLine.setAttribute("d", pathFrom(spPts));
+     }
+
+
+     function buildMarkers(group, arr, fillColor){
+       group.innerHTML = "";
+       arr.forEach(pt => {
+         const cx = xFor(pt.w);
+         const cy = yFor(pt.p);
+         const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+         c.setAttribute("cx", cx);
+         c.setAttribute("cy", cy);
+         c.setAttribute("r", 4);
+         c.setAttribute("fill", fillColor);
+         c.setAttribute("stroke", "rgba(255,255,255,.85)");
+         c.setAttribute("stroke-width", "1");
+         group.appendChild(c);
+       });
+     }
+
+
+     function showOrHideSP(){
+       const on = !!toggleSP.checked;
+       spLine.setAttribute("opacity", on ? "1" : "0");
+       legSPBox.setAttribute("opacity", on ? "1" : "0");
+       legSPText.setAttribute("opacity", on ? "1" : "0");
+
+
+       if(!on){
+         markersSP.setAttribute("opacity","0");
+       } else if(toggleMarkers.checked){
+         markersSP.setAttribute("opacity","1");
+       }
+     }
+
+
+     function showOrHideMarkers(){
+       const on = !!toggleMarkers.checked;
+       markersOur.setAttribute("opacity", on ? "1" : "0");
+       if(toggleSP.checked){
+         markersSP.setAttribute("opacity", on ? "1" : "0");
+       }
+     }
+
+
+     function svgToWrapPx(x, y){
+       const vb = svg.viewBox.baseVal;
+       const svgRect = svg.getBoundingClientRect();
+       const wrapRect = wrap.getBoundingClientRect();
+
+
+       const px = ( (x - vb.x) / vb.width ) * svgRect.width  + (svgRect.left - wrapRect.left);
+       const py = ( (y - vb.y) / vb.height) * svgRect.height + (svgRect.top  - wrapRect.top);
+       return { px, py };
+     }
+
+
+     function showTooltipAt(x, y, weekIdx){
+       const m = modelPts[weekIdx];
+       const sp = spPts[weekIdx];
+
+
+       const header = `<strong>Week ${m.w}</strong> · Model: ${m.p.toFixed(1)}%`;
+       const spLineTxt = toggleSP.checked
+         ? `<br><span style="color:rgba(0,0,0,.72)">S&amp;P 500:</span> ${sp.p.toFixed(1)}% <span style="color:rgba(0,0,0,.52)">(close ${sp.close.toFixed(2)})</span><br><span style="color:rgba(0,0,0,.52)">${sp.date}</span>`
+         : "";
+
+
+       tip.innerHTML = `${header}${spLineTxt}<br><span style="color:rgba(0,0,0,.62)">${m.note}</span>`;
+       const { px, py } = svgToWrapPx(x, y);
+       tip.style.left = px + "px";
+       tip.style.top  = py + "px";
+       tip.style.opacity = "1";
+     }
+
+
+     function hide(){
+       tip.style.opacity = "0";
+       crossX.setAttribute("opacity","0");
+       dot.setAttribute("opacity","0");
+       halo.setAttribute("opacity","0");
+     }
+
+
+     function nearestWeek(px){
+       const t = (px - plot.x0) / plot.w;
+       return Math.round(Math.max(0, Math.min(8, t * 8)));
+     }
+
+
+     function onMove(evt){
+       const pt = svg.createSVGPoint();
+       pt.x = evt.clientX; pt.y = evt.clientY;
+       const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+
+       const cx = Math.max(plot.x0, Math.min(plot.x0 + plot.w, p.x));
+       const w = nearestWeek(cx);
+
+
+       const x = xFor(w);
+       const y = yFor(modelPts[w].p);
+
+
+       crossX.setAttribute("x1", x);
+       crossX.setAttribute("x2", x);
+       crossX.setAttribute("opacity", "1");
+
+
+       dot.setAttribute("cx", x);
+       dot.setAttribute("cy", y);
+       dot.setAttribute("opacity", "1");
+
+
+       halo.setAttribute("cx", x);
+       halo.setAttribute("cy", y);
+       halo.setAttribute("opacity", "1");
+
+
+       showTooltipAt(x, y, w);
+     }
+
+
+     // Init
+     drawSeries();
+     buildMarkers(markersOur, modelPts, "rgba(0,0,0,.22)");
+     buildMarkers(markersSP, spPts, "rgba(0,0,0,.28)");
+
+
+     showOrHideMarkers();
+     showOrHideSP();
+
+
+     // Events
+     hover.addEventListener("mousemove", onMove);
+     hover.addEventListener("mouseleave", hide);
+
+
+     toggleSP.addEventListener("change", () => {
+       showOrHideSP();
+       hide();
+     });
+     toggleMarkers.addEventListener("change", () => {
+       showOrHideMarkers();
+     });
+   })();
+ </script>
 </body>
 </html>
+
+
+
+
+
