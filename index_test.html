@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Pipeline Simulation | Portfolio Builder</title>
+  <meta name="description" content="A fully interactive simulation of the multi-agent portfolio construction pipeline." />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: rgba(0,0,0,.84);
+      --muted: rgba(0,0,0,.62);
+      --border: rgba(0,0,0,.12);
+      --soft: rgba(0,0,0,.04);
+      --accent: #0b4f6c;
+      --accent-light: rgba(11,79,108,.12);
+      --accent2: #1f7a1f;
+      --accent2-light: rgba(31,122,31,.12);
+      --warn: #9a5b13;
+      --warn-light: rgba(154,91,19,.12);
+      --danger: #c0392b;
+      --danger-light: rgba(192,57,43,.08);
+      --maxw: 1200px;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      font: 400 14px/1.5 -apple-system, BlinkMacSystemFont, "Roboto", Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: #f8f9fa;
+    }
+    body { margin: 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      background: linear-gradient(135deg, hsl(200, 60%, 15%) 0%, hsl(200, 50%, 22%) 100%);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 2px 12px rgba(0,0,0,.15);
+    }
+    .header-content {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      height: 56px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,.95);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: .2px;
+    }
+    .brand .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    }
+    .header nav { display: flex; gap: 6px; }
+    .header nav a {
+      font-size: 13px;
+      color: rgba(255,255,255,.75);
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 150ms;
+    }
+    .header nav a:hover { 
+      color: rgba(255,255,255,1); 
+      background: rgba(255,255,255,.1);
+      text-decoration: none; 
+    }
+
+    /* Main */
+    main {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 24px 20px 70px;
+    }
+
+    h1 {
+      font-family: ui-serif, Georgia, serif;
+      font-weight: 700;
+      font-size: 32px;
+      margin: 0 0 6px;
+      letter-spacing: -.015em;
+      color: hsl(200, 60%, 18%);
+    }
+    .subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      margin: 0 0 24px;
+      max-width: 52em;
+      line-height: 1.55;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+    .tab {
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 150ms;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Controls Panel */
+    .controls-panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .controls-panel h3 {
+      margin: 0 0 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px 20px;
+    }
+    .control-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .control-group select,
+    .control-group input[type="number"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      transition: border-color 150ms, box-shadow 150ms;
+    }
+    .control-group select:focus,
+    .control-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11,79,108,.1);
+    }
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .range-row input[type="range"] { 
+      flex: 1; 
+      height: 6px;
+      -webkit-appearance: none;
+      background: var(--border);
+      border-radius: 3px;
+    }
+    .range-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .range-row .val {
+      min-width: 32px;
+      text-align: right;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 120ms;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, hsl(200, 60%, 32%) 100%);
+      color: white;
+      box-shadow: 0 2px 6px rgba(11,79,108,.25);
+    }
+    .btn-primary:hover:not(:disabled) { 
+      box-shadow: 0 4px 12px rgba(11,79,108,.35);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { 
+      background: rgba(0,0,0,.03);
+      border-color: rgba(0,0,0,.2);
+    }
+    .btn-success {
+      background: linear-gradient(135deg, var(--accent2) 0%, hsl(120, 50%, 32%) 100%);
+      color: white;
+    }
+    .speed-control {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .speed-control select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 300ms ease;
+      width: 0%;
+    }
+
+    /* Two Column Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Pipeline Stages */
+    .pipeline-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stage {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      overflow: hidden;
+      transition: all 300ms;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .stage.inactive {
+      opacity: 0.5;
+    }
+    .stage.active {
+      box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgba(11,79,108,.15);
+    }
+    .stage.complete {
+      border-color: rgba(31,122,31,.3);
+    }
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.02), rgba(0,0,0,.04));
+      border-bottom: 1px solid var(--border);
+    }
+    .stage-header h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stage-header .num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stage.complete .stage-header .num {
+      background: var(--accent2);
+    }
+    .stage-header .status {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stage-header .status .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    .stage.active .stage-header .status .dot {
+      background: var(--warn);
+      animation: pulse 1s infinite;
+    }
+    .stage.complete .stage-header .status .dot {
+      background: var(--accent2);
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .stage-body {
+      padding: 14px 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .stage-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .stage-body::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,.15);
+      border-radius: 3px;
+    }
+
+    /* Candidate Cards */
+    .candidates {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .candidate {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      transition: all 200ms;
+      position: relative;
+    }
+    .candidate:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .candidate.passed {
+      background: linear-gradient(135deg, rgba(31,122,31,.04), rgba(31,122,31,.08));
+      border-color: rgba(31,122,31,.25);
+    }
+    .candidate.failed {
+      background: rgba(192,57,43,.03);
+      border-color: rgba(192,57,43,.18);
+      opacity: 0.7;
+    }
+    .candidate .ticker {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .candidate .ticker .badge {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .candidate.passed .ticker .badge {
+      background: var(--accent2-light);
+      color: var(--accent2);
+    }
+    .candidate.failed .ticker .badge {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+    .candidate .name {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .candidate .meta {
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .candidate .meta span {
+      background: rgba(0,0,0,.04);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Agent Scores */
+    .agent-scores {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .agent-scores .row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 10px;
+    }
+    .agent-scores .label {
+      width: 28px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .agent-scores .bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: rgba(0,0,0,.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .agent-scores .bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 400ms ease;
+    }
+    .agent-scores .bar.val { background: #3498db; }
+    .agent-scores .bar.gro { background: #9b59b6; }
+    .agent-scores .bar.mac { background: #e67e22; }
+    .agent-scores .bar.rsk { background: #27ae60; }
+    .agent-scores .bar.sen { background: #e74c3c; }
+    .agent-scores .score {
+      width: 24px;
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Composite Score */
+    .composite-score {
+      margin-top: 8px;
+      padding: 8px;
+      background: linear-gradient(135deg, var(--accent-light), rgba(11,79,108,.06));
+      border-radius: 8px;
+      text-align: center;
+    }
+    .composite-score .label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .composite-score .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Disagreement Indicator */
+    .disagreement {
+      margin-top: 6px;
+      padding: 6px 8px;
+      background: var(--warn-light);
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--warn);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Fail Reason */
+    .fail-reason {
+      margin-top: 8px;
+      padding: 6px 8px;
+      background: var(--danger-light);
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--danger);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Right Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .panel-header {
+      padding: 12px 16px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.02), rgba(0,0,0,.04));
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-body {
+      padding: 14px 16px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 12px;
+      background: #fafafa;
+      border-radius: 10px;
+    }
+    .stat-item .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+    .stat-item .label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      margin-top: 4px;
+    }
+
+    /* Sector Breakdown */
+    .sector-breakdown {
+      margin-top: 8px;
+    }
+    .sector-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .sector-row:last-child { border-bottom: none; }
+    .sector-row .name {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .sector-row .bar-wrap {
+      width: 80px;
+      height: 8px;
+      background: rgba(0,0,0,.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .sector-row .bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    .sector-row .pct {
+      width: 40px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Risk Metrics */
+    .risk-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .risk-metric {
+      padding: 10px;
+      background: #fafafa;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .risk-metric .value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .risk-metric .value.good { color: var(--accent2); }
+    .risk-metric .value.warn { color: var(--warn); }
+    .risk-metric .value.bad { color: var(--danger); }
+    .risk-metric .label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Log Panel */
+    .log-panel {
+      background: #1a1a2e;
+      border-radius: var(--radius);
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      font-size: 11px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .log-header {
+      padding: 10px 14px;
+      background: #16213e;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      color: rgba(255,255,255,.5);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .log-header button {
+      background: rgba(255,255,255,.1);
+      border: none;
+      color: rgba(255,255,255,.6);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    .log-header button:hover {
+      background: rgba(255,255,255,.15);
+    }
+    .log-body {
+      padding: 12px 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      color: #a4b0be;
+    }
+    .log-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .log-body::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.1);
+      border-radius: 3px;
+    }
+    .log-line {
+      margin: 0 0 3px;
+      line-height: 1.5;
+      display: flex;
+      gap: 8px;
+    }
+    .log-line .ts { 
+      color: #5dade2;
+      flex-shrink: 0;
+    }
+    .log-line .stage-tag { color: #bb8fce; }
+    .log-line .action { color: #f7dc6f; }
+    .log-line .detail { color: #85c1e9; }
+    .log-line .warn { color: #f0b27a; }
+    .log-line .pass { color: #58d68d; }
+    .log-line .fail { color: #ec7063; }
+    .log-line .info { color: #aeb6bf; }
+
+    /* Final Portfolio Table */
+    .portfolio-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .portfolio-table th,
+    .portfolio-table td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .portfolio-table th {
+      background: linear-gradient(to bottom, rgba(0,0,0,.02), rgba(0,0,0,.04));
+      font-weight: 700;
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .portfolio-table tr:last-child td { border-bottom: none; }
+    .portfolio-table tr:hover td { background: rgba(0,0,0,.02); }
+    .portfolio-table .ticker-cell {
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .weight-bar-cell {
+      width: 100px;
+    }
+    .weight-bar {
+      height: 8px;
+      background: linear-gradient(90deg, var(--accent), hsl(200, 60%, 45%));
+      border-radius: 4px;
+      min-width: 4px;
+    }
+
+    /* Correlation Matrix */
+    .correlation-matrix {
+      font-size: 10px;
+      overflow-x: auto;
+    }
+    .correlation-matrix table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .correlation-matrix th,
+    .correlation-matrix td {
+      padding: 6px 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .correlation-matrix th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+    .correlation-matrix td {
+      font-variant-numeric: tabular-nums;
+    }
+    .corr-high { background: rgba(231,76,60,.2); color: #c0392b; }
+    .corr-med { background: rgba(241,196,15,.15); color: #9a7b0a; }
+    .corr-low { background: rgba(46,204,113,.15); color: #1e8449; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .empty-state .icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    /* Comparison Mode */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .comparison-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      overflow: hidden;
+    }
+    .comparison-card.winner {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 2px rgba(31,122,31,.15);
+    }
+    .comparison-card .header {
+      padding: 14px 16px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.02), rgba(0,0,0,.04));
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .comparison-card.winner .header {
+      background: linear-gradient(to bottom, rgba(31,122,31,.06), rgba(31,122,31,.1));
+    }
+    .comparison-card .header .badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      background: var(--accent2);
+      color: white;
+      border-radius: 4px;
+    }
+    .comparison-card .body {
+      padding: 16px;
+    }
+
+    /* Stress Test */
+    .stress-scenarios {
+      display: grid;
+      gap: 10px;
+    }
+    .scenario {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .scenario .name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .scenario .impact {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .scenario .impact.positive { color: var(--accent2); }
+    .scenario .impact.negative { color: var(--danger); }
+    .scenario .impact.neutral { color: var(--muted); }
+
+    /* Footer */
+    footer {
+      margin-top: 40px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeIn 300ms ease forwards;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="brand"><span class="dot"></span>Pipeline Simulation v2.0</div>
+      <nav>
+        <a href="index.html">← Back to Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Interactive Pipeline Simulation</h1>
+    <p class="subtitle">
+      Watch candidates flow through each stage of the portfolio construction pipeline. Adjust parameters,
+      run stress tests, compare presets, and inspect every decision with full transparency.
+    </p>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="simulation">Simulation</button>
+      <button class="tab" data-tab="comparison">Compare Presets</button>
+      <button class="tab" data-tab="stress">Stress Test</button>
+      <button class="tab" data-tab="audit">Audit Trail</button>
+    </div>
+
+    <!-- SIMULATION TAB -->
+    <div class="tab-panel active" id="tab-simulation">
+      <!-- Controls Panel -->
+      <div class="controls-panel">
+        <h3>Simulation Parameters</h3>
+        <div class="controls-grid">
+          <div class="control-group">
+            <label>Policy Preset</label>
+            <select id="presetSelect">
+              <option value="safety" selected>Safety / Steady Growth</option>
+              <option value="balanced">Balanced</option>
+              <option value="growth">Growth-Leaning</option>
+              <option value="custom">Custom Weights</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Sentiment Cap (%)</label>
+            <div class="range-row">
+              <input type="range" id="sentimentCap" min="0" max="25" value="10" />
+              <span class="val" id="sentimentCapVal">10</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label>Gating Strictness</label>
+            <select id="gatingSelect">
+              <option value="relaxed">Relaxed</option>
+              <option value="flexible" selected>Flexible</option>
+              <option value="conservative">Conservative</option>
+              <option value="strict">Strict</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Max Position (%)</label>
+            <div class="range-row">
+              <input type="range" id="maxPosition" min="3" max="15" value="8" />
+              <span class="val" id="maxPositionVal">8</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-bar">
+          <div class="fill" id="progressFill"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="runBtn">▶ Run Full Simulation</button>
+          <button class="btn btn-secondary" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <!-- Left: Pipeline Stages -->
+        <div class="pipeline-wrap">
+          <!-- Stage 1: Universe -->
+          <div class="stage inactive" id="stage1">
+            <div class="stage-header">
+              <h4><span class="num">1</span> Universe Generation</h4>
+              <div class="status"><span class="dot"></span><span id="stage1Status">Pending</span></div>
+            </div>
+            <div class="stage-body">
+              <div class="candidates" id="stage1Candidates">
+                <div class="empty-state">
+                  <div class="icon">📊</div>
+                  Click "Run Full Simulation" to generate universe
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 2: Eligibility Filters -->
+          <div class="stage inactive" id="stage2">
+            <div class="stage-header">
+              <h4><span class="num">2</span> Eligibility Filters</h4>
+              <div class="status"><span class="dot"></span><span id="stage2Status">Pending</span></div>
+            </div>
+            <div class="stage-body">
+              <div class="candidates" id="stage2Candidates">
+                <div class="empty-state">
+                  <div class="icon">🔍</div>
+                  Waiting for Stage 1...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 3: Multi-Agent Scoring -->
+          <div class="stage inactive" id="stage3">
+            <div class="stage-header">
+              <h4><span class="num">3</span> Multi-Agent Scoring</h4>
+              <div class="status"><span class="dot"></span><span id="stage3Status">Pending</span></div>
+            </div>
+            <div class="stage-body">
+              <div class="candidates" id="stage3Candidates">
+                <div class="empty-state">
+                  <div class="icon">🤖</div>
+                  Waiting for Stage 2...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 4: Portfolio-Fit Gates -->
+          <div class="stage inactive" id="stage4">
+            <div class="stage-header">
+              <h4><span class="num">4</span> Portfolio-Fit Gates</h4>
+              <div class="status"><span class="dot"></span><span id="stage4Status">Pending</span></div>
+            </div>
+            <div class="stage-body">
+              <div class="candidates" id="stage4Candidates">
+                <div class="empty-state">
+                  <div class="icon">⚖️</div>
+                  Waiting for Stage 3...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Final Portfolio -->
+          <div class="stage inactive" id="stageFinal">
+            <div class="stage-header">
+              <h4><span class="num" style="background: var(--accent2);">✓</span> Final Portfolio</h4>
+              <div class="status"><span class="dot"></span><span id="stageFinalStatus">Pending</span></div>
+            </div>
+            <div class="stage-body" style="max-height: 400px;">
+              <div id="portfolioOutput">
+                <div class="empty-state">
+                  <div class="icon">📁</div>
+                  Waiting for pipeline to complete...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Log Panel -->
+          <div class="log-panel">
+            <div class="log-header">
+              <span>Simulation Log</span>
+              <button id="clearLogBtn">Clear</button>
+            </div>
+            <div class="log-body" id="logBody">
+              <p class="log-line"><span class="ts">[--:--:--]</span><span class="info">Ready. Configure parameters and run simulation.</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Sidebar -->
+        <div class="sidebar">
+          <!-- Live Stats -->
+          <div class="panel">
+            <div class="panel-header">Live Statistics</div>
+            <div class="panel-body">
+              <div class="stats-grid" id="liveStats">
+                <div class="stat-item">
+                  <div class="value" id="statUniverse">—</div>
+                  <div class="label">Universe</div>
+                </div>
+                <div class="stat-item">
+                  <div class="value" id="statEligible">—</div>
+                  <div class="label">Eligible</div>
+                </div>
+                <div class="stat-item">
+                  <div class="value" id="statScored">—</div>
+                  <div class="label">Scored</div>
+                </div>
+                <div class="stat-item">
+                  <div class="value" id="statFinal">—</div>
+                  <div class="label">Final</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sector Breakdown -->
+          <div class="panel">
+            <div class="panel-header">Sector Allocation</div>
+            <div class="panel-body">
+              <div class="sector-breakdown" id="sectorBreakdown">
+                <div class="empty-state" style="padding: 20px;">
+                  Run simulation to see allocation
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Metrics -->
+          <div class="panel">
+            <div class="panel-header">Risk Metrics</div>
+            <div class="panel-body">
+              <div class="risk-metrics" id="riskMetrics">
+                <div class="risk-metric">
+                  <div class="value" id="riskConcentration">—</div>
+                  <div class="label">Concentration</div>
+                </div>
+                <div class="risk-metric">
+                  <div class="value" id="riskDiversity">—</div>
+                  <div class="label">Diversity Score</div>
+                </div>
+                <div class="risk-metric">
+                  <div class="value" id="riskAvgScore">—</div>
+                  <div class="label">Avg Composite</div>
+                </div>
+                <div class="risk-metric">
+                  <div class="value" id="riskTopWeight">—</div>
+                  <div class="label">Top Weight</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARISON TAB -->
+    <div class="tab-panel" id="tab-comparison">
+      <div class="controls-panel">
+        <h3>Compare Policy Presets</h3>
+        <p style="color: var(--muted); margin: 0 0 16px; font-size: 13px;">
+          Run the same universe through different presets to see how policy choices affect outcomes.
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="runComparisonBtn">▶ Run Comparison</button>
+        </div>
+      </div>
+      <div class="comparison-grid" id="comparisonResults">
+        <div class="empty-state" style="grid-column: 1 / -1; padding: 60px;">
+          <div class="icon">📊</div>
+          Click "Run Comparison" to compare all presets
+        </div>
+      </div>
+    </div>
+
+    <!-- STRESS TEST TAB -->
+    <div class="tab-panel" id="tab-stress">
+      <div class="controls-panel">
+        <h3>Stress Test Scenarios</h3>
+        <p style="color: var(--muted); margin: 0 0 16px; font-size: 13px;">
+          See how your portfolio would perform under different market conditions.
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="runStressBtn" disabled>▶ Run Stress Tests</button>
+          <span style="color: var(--muted); font-size: 12px;">(Run simulation first)</span>
+        </div>
+      </div>
+      <div class="stress-scenarios" id="stressResults">
+        <div class="empty-state" style="padding: 60px;">
+          <div class="icon">⚡</div>
+          Run a simulation first, then stress test the portfolio
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIT TRAIL TAB -->
+    <div class="tab-panel" id="tab-audit">
+      <div class="controls-panel">
+        <h3>Full Audit Trail</h3>
+        <p style="color: var(--muted); margin: 0 0 16px; font-size: 13px;">
+          Complete record of every decision made during the simulation.
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="downloadAuditBtn" disabled>⬇ Download Audit Report</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body" style="max-height: 600px; overflow-y: auto;">
+          <div id="auditTrail">
+            <div class="empty-state" style="padding: 60px;">
+              <div class="icon">📋</div>
+              Run a simulation to generate audit trail
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        <strong>Test Version 2.0:</strong> Interactive simulation for demonstration purposes.
+        All data is synthetic. Results are illustrative only.
+      </p>
+    </footer>
+  </main>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ========== EXPANDED STOCK DATA ==========
+    const STOCK_DATA = [
+      // Large Cap Tech
+      { ticker: 'AAPL', name: 'Apple Inc.', sector: 'Technology', industry: 'Consumer Electronics', liquidity: 'high', dataQuality: 'high', marketCap: 2800, volatility: 0.22, beta: 1.2 },
+      { ticker: 'MSFT', name: 'Microsoft Corp.', sector: 'Technology', industry: 'Software', liquidity: 'high', dataQuality: 'high', marketCap: 2600, volatility: 0.20, beta: 1.1 },
+      { ticker: 'GOOGL', name: 'Alphabet Inc.', sector: 'Technology', industry: 'Internet Services', liquidity: 'high', dataQuality: 'high', marketCap: 1800, volatility: 0.24, beta: 1.15 },
+      { ticker: 'AMZN', name: 'Amazon.com Inc.', sector: 'Consumer', industry: 'E-Commerce', liquidity: 'high', dataQuality: 'high', marketCap: 1500, volatility: 0.26, beta: 1.25 },
+      { ticker: 'NVDA', name: 'NVIDIA Corp.', sector: 'Technology', industry: 'Semiconductors', liquidity: 'high', dataQuality: 'high', marketCap: 1200, volatility: 0.38, beta: 1.6 },
+      { ticker: 'META', name: 'Meta Platforms', sector: 'Technology', industry: 'Social Media', liquidity: 'high', dataQuality: 'high', marketCap: 900, volatility: 0.32, beta: 1.35 },
+      { ticker: 'AVGO', name: 'Broadcom Inc.', sector: 'Technology', industry: 'Semiconductors', liquidity: 'high', dataQuality: 'high', marketCap: 450, volatility: 0.28, beta: 1.2 },
+      { ticker: 'ORCL', name: 'Oracle Corp.', sector: 'Technology', industry: 'Software', liquidity: 'high', dataQuality: 'high', marketCap: 320, volatility: 0.24, beta: 1.0 },
+      { ticker: 'CRM', name: 'Salesforce Inc.', sector: 'Technology', industry: 'Software', liquidity: 'high', dataQuality: 'high', marketCap: 280, volatility: 0.30, beta: 1.2 },
+      { ticker: 'ADBE', name: 'Adobe Inc.', sector: 'Technology', industry: 'Software', liquidity: 'high', dataQuality: 'high', marketCap: 250, volatility: 0.28, beta: 1.15 },
+      { ticker: 'INTC', name: 'Intel Corp.', sector: 'Technology', industry: 'Semiconductors', liquidity: 'high', dataQuality: 'high', marketCap: 150, volatility: 0.35, beta: 1.1 },
+      { ticker: 'QCOM', name: 'Qualcomm Inc.', sector: 'Technology', industry: 'Semiconductors', liquidity: 'high', dataQuality: 'high', marketCap: 180, volatility: 0.30, beta: 1.25 },
+      // Financials
+      { ticker: 'BRK.B', name: 'Berkshire Hathaway', sector: 'Financials', industry: 'Conglomerate', liquidity: 'high', dataQuality: 'high', marketCap: 780, volatility: 0.16, beta: 0.9 },
+      { ticker: 'JPM', name: 'JPMorgan Chase', sector: 'Financials', industry: 'Banking', liquidity: 'high', dataQuality: 'high', marketCap: 520, volatility: 0.22, beta: 1.1 },
+      { ticker: 'V', name: 'Visa Inc.', sector: 'Financials', industry: 'Payments', liquidity: 'high', dataQuality: 'high', marketCap: 460, volatility: 0.20, beta: 1.0 },
+      { ticker: 'MA', name: 'Mastercard Inc.', sector: 'Financials', industry: 'Payments', liquidity: 'high', dataQuality: 'high', marketCap: 360, volatility: 0.21, beta: 1.05 },
+      { ticker: 'BAC', name: 'Bank of America', sector: 'Financials', industry: 'Banking', liquidity: 'high', dataQuality: 'high', marketCap: 280, volatility: 0.28, beta: 1.3 },
+      { ticker: 'GS', name: 'Goldman Sachs', sector: 'Financials', industry: 'Investment Banking', liquidity: 'high', dataQuality: 'high', marketCap: 140, volatility: 0.30, beta: 1.4 },
+      // Healthcare
+      { ticker: 'JNJ', name: 'Johnson & Johnson', sector: 'Healthcare', industry: 'Pharmaceuticals', liquidity: 'high', dataQuality: 'high', marketCap: 480, volatility: 0.14, beta: 0.7 },
+      { ticker: 'UNH', name: 'UnitedHealth Group', sector: 'Healthcare', industry: 'Health Insurance', liquidity: 'high', dataQuality: 'high', marketCap: 450, volatility: 0.18, beta: 0.85 },
+      { ticker: 'MRK', name: 'Merck & Co.', sector: 'Healthcare', industry: 'Pharmaceuticals', liquidity: 'high', dataQuality: 'high', marketCap: 280, volatility: 0.18, beta: 0.65 },
+      { ticker: 'ABBV', name: 'AbbVie Inc.', sector: 'Healthcare', industry: 'Pharmaceuticals', liquidity: 'high', dataQuality: 'high', marketCap: 260, volatility: 0.20, beta: 0.75 },
+      { ticker: 'PFE', name: 'Pfizer Inc.', sector: 'Healthcare', industry: 'Pharmaceuticals', liquidity: 'high', dataQuality: 'high', marketCap: 160, volatility: 0.24, beta: 0.7 },
+      { ticker: 'TMO', name: 'Thermo Fisher', sector: 'Healthcare', industry: 'Life Sciences', liquidity: 'med', dataQuality: 'high', marketCap: 200, volatility: 0.22, beta: 0.9 },
+      // Consumer
+      { ticker: 'PG', name: 'Procter & Gamble', sector: 'Consumer', industry: 'Consumer Products', liquidity: 'high', dataQuality: 'high', marketCap: 380, volatility: 0.14, beta: 0.55 },
+      { ticker: 'HD', name: 'Home Depot', sector: 'Consumer', industry: 'Retail', liquidity: 'high', dataQuality: 'high', marketCap: 340, volatility: 0.20, beta: 1.05 },
+      { ticker: 'PEP', name: 'PepsiCo Inc.', sector: 'Consumer', industry: 'Beverages', liquidity: 'high', dataQuality: 'high', marketCap: 240, volatility: 0.14, beta: 0.6 },
+      { ticker: 'KO', name: 'Coca-Cola Co.', sector: 'Consumer', industry: 'Beverages', liquidity: 'high', dataQuality: 'high', marketCap: 230, volatility: 0.13, beta: 0.55 },
+      { ticker: 'COST', name: 'Costco Wholesale', sector: 'Consumer', industry: 'Retail', liquidity: 'high', dataQuality: 'high', marketCap: 220, volatility: 0.18, beta: 0.85 },
+      { ticker: 'WMT', name: 'Walmart Inc.', sector: 'Consumer', industry: 'Retail', liquidity: 'high', dataQuality: 'high', marketCap: 400, volatility: 0.16, beta: 0.65 },
+      { ticker: 'NKE', name: 'Nike Inc.', sector: 'Consumer', industry: 'Apparel', liquidity: 'high', dataQuality: 'high', marketCap: 140, volatility: 0.26, beta: 1.1 },
+      { ticker: 'MCD', name: "McDonald's Corp.", sector: 'Consumer', industry: 'Restaurants', liquidity: 'high', dataQuality: 'high', marketCap: 200, volatility: 0.16, beta: 0.7 },
+      // Energy
+      { ticker: 'XOM', name: 'Exxon Mobil', sector: 'Energy', industry: 'Oil & Gas', liquidity: 'high', dataQuality: 'high', marketCap: 420, volatility: 0.24, beta: 1.0 },
+      { ticker: 'CVX', name: 'Chevron Corp.', sector: 'Energy', industry: 'Oil & Gas', liquidity: 'high', dataQuality: 'high', marketCap: 300, volatility: 0.22, beta: 0.95 },
+      { ticker: 'COP', name: 'ConocoPhillips', sector: 'Energy', industry: 'Oil & Gas', liquidity: 'high', dataQuality: 'high', marketCap: 130, volatility: 0.28, beta: 1.15 },
+      // Industrials
+      { ticker: 'CAT', name: 'Caterpillar Inc.', sector: 'Industrials', industry: 'Machinery', liquidity: 'high', dataQuality: 'high', marketCap: 160, volatility: 0.24, beta: 1.1 },
+      { ticker: 'GE', name: 'General Electric', sector: 'Industrials', industry: 'Conglomerate', liquidity: 'high', dataQuality: 'high', marketCap: 180, volatility: 0.28, beta: 1.2 },
+      { ticker: 'HON', name: 'Honeywell Intl', sector: 'Industrials', industry: 'Diversified', liquidity: 'high', dataQuality: 'high', marketCap: 140, volatility: 0.20, beta: 1.0 },
+      { ticker: 'UPS', name: 'United Parcel Service', sector: 'Industrials', industry: 'Logistics', liquidity: 'high', dataQuality: 'high', marketCap: 120, volatility: 0.22, beta: 1.05 },
+      // Communications
+      { ticker: 'NFLX', name: 'Netflix Inc.', sector: 'Comm. Services', industry: 'Streaming', liquidity: 'high', dataQuality: 'high', marketCap: 250, volatility: 0.36, beta: 1.4 },
+      { ticker: 'DIS', name: 'Walt Disney Co.', sector: 'Comm. Services', industry: 'Entertainment', liquidity: 'high', dataQuality: 'high', marketCap: 180, volatility: 0.28, beta: 1.2 },
+      { ticker: 'CMCSA', name: 'Comcast Corp.', sector: 'Comm. Services', industry: 'Media', liquidity: 'high', dataQuality: 'high', marketCap: 170, volatility: 0.22, beta: 1.0 },
+      // Utilities
+      { ticker: 'NEE', name: 'NextEra Energy', sector: 'Utilities', industry: 'Renewable Energy', liquidity: 'high', dataQuality: 'high', marketCap: 150, volatility: 0.18, beta: 0.6 },
+      { ticker: 'DUK', name: 'Duke Energy', sector: 'Utilities', industry: 'Electric Utilities', liquidity: 'high', dataQuality: 'high', marketCap: 80, volatility: 0.14, beta: 0.45 },
+      // Risky / Lower Quality (for filtering)
+      { ticker: 'SPCE', name: 'Virgin Galactic', sector: 'Industrials', industry: 'Aerospace', liquidity: 'low', dataQuality: 'low', marketCap: 2, volatility: 0.85, beta: 2.5 },
+      { ticker: 'GME', name: 'GameStop Corp.', sector: 'Consumer', industry: 'Retail', liquidity: 'med', dataQuality: 'low', marketCap: 8, volatility: 0.95, beta: 2.8 },
+      { ticker: 'AMC', name: 'AMC Entertainment', sector: 'Comm. Services', industry: 'Entertainment', liquidity: 'med', dataQuality: 'low', marketCap: 4, volatility: 0.90, beta: 2.6 },
+      { ticker: 'BBBY', name: 'Bed Bath Beyond', sector: 'Consumer', industry: 'Retail', liquidity: 'low', dataQuality: 'low', marketCap: 0.5, volatility: 1.2, beta: 3.0 },
+      { ticker: 'RIVN', name: 'Rivian Automotive', sector: 'Consumer', industry: 'Automotive', liquidity: 'med', dataQuality: 'med', marketCap: 15, volatility: 0.70, beta: 2.2 },
+      { ticker: 'LCID', name: 'Lucid Group', sector: 'Consumer', industry: 'Automotive', liquidity: 'low', dataQuality: 'med', marketCap: 6, volatility: 0.75, beta: 2.3 },
+      { ticker: 'PLTR', name: 'Palantir Tech', sector: 'Technology', industry: 'Software', liquidity: 'med', dataQuality: 'med', marketCap: 35, volatility: 0.55, beta: 1.8 },
+      { ticker: 'COIN', name: 'Coinbase Global', sector: 'Financials', industry: 'Crypto', liquidity: 'med', dataQuality: 'med', marketCap: 40, volatility: 0.80, beta: 2.5 },
+      { ticker: 'MARA', name: 'Marathon Digital', sector: 'Financials', industry: 'Crypto', liquidity: 'low', dataQuality: 'low', marketCap: 5, volatility: 1.1, beta: 3.2 },
+    ];
+
+    // Sector correlations (simplified)
+    const SECTOR_CORRELATIONS = {
+      'Technology-Technology': 0.75,
+      'Technology-Financials': 0.45,
+      'Technology-Healthcare': 0.35,
+      'Technology-Consumer': 0.50,
+      'Technology-Energy': 0.25,
+      'Financials-Financials': 0.70,
+      'Financials-Healthcare': 0.30,
+      'Financials-Consumer': 0.45,
+      'Financials-Energy': 0.40,
+      'Healthcare-Healthcare': 0.65,
+      'Healthcare-Consumer': 0.35,
+      'Healthcare-Energy': 0.20,
+      'Consumer-Consumer': 0.60,
+      'Consumer-Energy': 0.30,
+      'Energy-Energy': 0.80,
+      'default': 0.40
+    };
+
+    // ========== PRESETS ==========
+    const PRESETS = {
+      safety:   { Value: 28, Growth: 15, Macro: 17, Risk: 32, Sentiment: 8, label: 'Safety / Steady Growth' },
+      balanced: { Value: 22, Growth: 22, Macro: 18, Risk: 22, Sentiment: 16, label: 'Balanced' },
+      growth:   { Value: 15, Growth: 32, Macro: 15, Risk: 13, Sentiment: 25, label: 'Growth-Leaning' },
+      custom:   { Value: 20, Growth: 20, Macro: 20, Risk: 20, Sentiment: 20, label: 'Custom' }
+    };
+
+    // ========== STATE ==========
+    let state = {
+      currentStep: 0,
+      universe: [],
+      afterEligibility: [],
+      afterScoring: [],
+      afterGates: [],
+      finalPortfolio: [],
+      running: false,
+      auditLog: [],
+      simulationComplete: false
+    };
+
+    // ========== DOM HELPERS ==========
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => document.querySelectorAll(sel);
+
+    // ========== CONTROLS ==========
+    const presetSelect = $('#presetSelect');
+    const sentimentCap = $('#sentimentCap');
+    const sentimentCapVal = $('#sentimentCapVal');
+    const gatingSelect = $('#gatingSelect');
+    const maxPosition = $('#maxPosition');
+    const maxPositionVal = $('#maxPositionVal');
+
+    const runBtn = $('#runBtn');
+    const resetBtn = $('#resetBtn');
+    const runComparisonBtn = $('#runComparisonBtn');
+    const runStressBtn = $('#runStressBtn');
+    const downloadAuditBtn = $('#downloadAuditBtn');
+    const clearLogBtn = $('#clearLogBtn');
+    const progressFill = $('#progressFill');
+    const logBody = $('#logBody');
+
+    // ========== UTILITY FUNCTIONS ==========
+    function timestamp() {
+      const d = new Date();
+      return d.toTimeString().slice(0, 8);
+    }
+
+    function log(msg, type = 'info') {
+      const line = document.createElement('p');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="ts">[${timestamp()}]</span><span class="${type}">${msg}</span>`;
+      logBody.appendChild(line);
+      logBody.scrollTop = logBody.scrollHeight;
+    }
+
+    function audit(stage, action, details, result) {
+      state.auditLog.push({
+        timestamp: new Date().toISOString(),
+        stage,
+        action,
+        details,
+        result
+      });
+    }
+
+    function clearLog() {
+      logBody.innerHTML = '';
+    }
+
+    function randomBetween(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function getDelay() {
+      return 800; // Always slow for smooth walkthrough
+    }
+
+    function scrollToElement(el) {
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function delay(ms) {
+      return new Promise(r => setTimeout(r, ms || getDelay()));
+    }
+
+    function setProgress(pct) {
+      progressFill.style.width = pct + '%';
+    }
+
+    function setStageState(stageId, stateClass, statusText) {
+      const stage = $(`#${stageId}`);
+      stage.classList.remove('inactive', 'active', 'complete');
+      if (stateClass) stage.classList.add(stateClass);
+      $(`#${stageId}Status`).textContent = statusText;
+    }
+
+    function getParams() {
+      return {
+        preset: presetSelect.value,
+        universeSize: 22, // Fixed
+        sentimentCap: parseInt(sentimentCap.value, 10),
+        gating: gatingSelect.value,
+        maxPosition: parseInt(maxPosition.value, 10),
+        maxSector: 35, // Fixed
+        minComposite: 45, // Fixed
+        maxPositions: 5 // Fixed at 5
+      };
+    }
+
+    function getCorrelation(sector1, sector2) {
+      if (sector1 === sector2) {
+        return SECTOR_CORRELATIONS[`${sector1}-${sector1}`] || 0.65;
+      }
+      const key1 = `${sector1}-${sector2}`;
+      const key2 = `${sector2}-${sector1}`;
+      return SECTOR_CORRELATIONS[key1] || SECTOR_CORRELATIONS[key2] || SECTOR_CORRELATIONS['default'];
+    }
+
+    // ========== RENDERING ==========
+    function renderCandidate(c, options = {}) {
+      const { showScores, showComposite, showAgentBars } = options;
+      const statusClass = c.status === 'passed' ? 'passed' : (c.status === 'failed' ? 'failed' : '');
+      const badge = c.status === 'passed' ? '<span class="badge">Pass</span>' : (c.status === 'failed' ? '<span class="badge">Fail</span>' : '');
+
+      let html = `<div class="candidate ${statusClass} animate-in">`;
+      html += `<div class="ticker">${c.ticker} ${badge}</div>`;
+      html += `<div class="name">${c.name}</div>`;
+      html += `<div class="meta">`;
+      html += `<span>${c.sector}</span>`;
+      html += `<span>$${c.marketCap}B</span>`;
+      if (c.volatility) html += `<span>Vol: ${(c.volatility * 100).toFixed(0)}%</span>`;
+      html += `</div>`;
+
+      if (showAgentBars && c.scores) {
+        html += `<div class="agent-scores">`;
+        const agents = [
+          { key: 'Val', label: 'Val', cls: 'val' },
+          { key: 'Gro', label: 'Gro', cls: 'gro' },
+          { key: 'Mac', label: 'Mac', cls: 'mac' },
+          { key: 'Rsk', label: 'Rsk', cls: 'rsk' },
+          { key: 'Sen', label: 'Sen', cls: 'sen' }
+        ];
+        for (const a of agents) {
+          const val = c.scores[a.key] || 0;
+          html += `<div class="row">`;
+          html += `<span class="label">${a.label}</span>`;
+          html += `<div class="bar-wrap"><div class="bar ${a.cls}" style="width: ${val}%;"></div></div>`;
+          html += `<span class="score">${val}</span>`;
+          html += `</div>`;
+        }
+        html += `</div>`;
+
+        // Disagreement indicator
+        if (c.scores) {
+          const vals = Object.values(c.scores);
+          const range = Math.max(...vals) - Math.min(...vals);
+          if (range > 40) {
+            html += `<div class="disagreement">⚠️ High agent disagreement (range: ${range})</div>`;
+          }
+        }
+      }
+
+      if (showComposite && c.composite !== undefined) {
+        html += `<div class="composite-score">`;
+        html += `<div class="label">Composite Score</div>`;
+        html += `<div class="value">${c.composite.toFixed(1)}</div>`;
+        html += `</div>`;
+      }
+
+      if (c.failReason) {
+        html += `<div class="fail-reason">✗ ${c.failReason}</div>`;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    function updateLiveStats() {
+      $('#statUniverse').textContent = state.universe.length || '—';
+      $('#statEligible').textContent = state.afterEligibility.filter(c => c.status === 'passed').length || '—';
+      $('#statScored').textContent = state.afterScoring.filter(c => c.status === 'passed').length || '—';
+      $('#statFinal').textContent = state.finalPortfolio.filter(c => c.status === 'passed').length || '—';
+    }
+
+    function renderSectorBreakdown() {
+      const container = $('#sectorBreakdown');
+      const positions = state.finalPortfolio.filter(c => c.status === 'passed');
+
+      if (positions.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding: 20px;">No positions yet</div>';
+        return;
+      }
+
+      const sectors = {};
+      for (const p of positions) {
+        sectors[p.sector] = (sectors[p.sector] || 0) + p.weight;
+      }
+
+      const sorted = Object.entries(sectors).sort((a, b) => b[1] - a[1]);
+      const maxWeight = Math.max(...sorted.map(s => s[1]));
+
+      let html = '';
+      for (const [name, weight] of sorted) {
+        const barWidth = (weight / maxWeight) * 100;
+        html += `<div class="sector-row">`;
+        html += `<span class="name">${name}</span>`;
+        html += `<div class="bar-wrap"><div class="bar" style="width: ${barWidth}%;"></div></div>`;
+        html += `<span class="pct">${weight.toFixed(1)}%</span>`;
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function renderRiskMetrics() {
+      const positions = state.finalPortfolio.filter(c => c.status === 'passed');
+
+      if (positions.length === 0) {
+        $('#riskConcentration').textContent = '—';
+        $('#riskDiversity').textContent = '—';
+        $('#riskAvgScore').textContent = '—';
+        $('#riskTopWeight').textContent = '—';
+        return;
+      }
+
+      // Concentration (HHI)
+      const hhi = positions.reduce((s, p) => s + Math.pow(p.weight / 100, 2), 0);
+      const concentrationPct = (hhi * 100).toFixed(0);
+      const concEl = $('#riskConcentration');
+      concEl.textContent = concentrationPct + '%';
+      concEl.className = 'value ' + (hhi < 0.1 ? 'good' : hhi < 0.15 ? 'warn' : 'bad');
+
+      // Diversity score (number of sectors)
+      const sectors = new Set(positions.map(p => p.sector));
+      const divEl = $('#riskDiversity');
+      divEl.textContent = sectors.size;
+      divEl.className = 'value ' + (sectors.size >= 5 ? 'good' : sectors.size >= 3 ? 'warn' : 'bad');
+
+      // Avg composite
+      const avgComposite = positions.reduce((s, p) => s + p.composite, 0) / positions.length;
+      const avgEl = $('#riskAvgScore');
+      avgEl.textContent = avgComposite.toFixed(1);
+      avgEl.className = 'value ' + (avgComposite >= 60 ? 'good' : avgComposite >= 50 ? 'warn' : 'bad');
+
+      // Top weight
+      const topWeight = Math.max(...positions.map(p => p.weight));
+      const topEl = $('#riskTopWeight');
+      topEl.textContent = topWeight.toFixed(1) + '%';
+      topEl.className = 'value ' + (topWeight <= 10 ? 'good' : topWeight <= 15 ? 'warn' : 'bad');
+    }
+
+    function renderCorrelationMatrix() {
+      const container = $('#correlationMatrix');
+      const positions = state.finalPortfolio.filter(c => c.status === 'passed').slice(0, 6);
+
+      if (positions.length < 2) {
+        container.innerHTML = '<div class="empty-state" style="padding: 20px;">Need at least 2 positions</div>';
+        return;
+      }
+
+      let html = '<table><thead><tr><th></th>';
+      for (const p of positions) {
+        html += `<th>${p.ticker}</th>`;
+      }
+      html += '</tr></thead><tbody>';
+
+      for (const p1 of positions) {
+        html += `<tr><th>${p1.ticker}</th>`;
+        for (const p2 of positions) {
+          if (p1.ticker === p2.ticker) {
+            html += '<td>—</td>';
+          } else {
+            const corr = getCorrelation(p1.sector, p2.sector);
+            const cls = corr >= 0.6 ? 'corr-high' : corr >= 0.4 ? 'corr-med' : 'corr-low';
+            html += `<td class="${cls}">${corr.toFixed(2)}</td>`;
+          }
+        }
+        html += '</tr>';
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function renderFinalPortfolio() {
+      const container = $('#portfolioOutput');
+      const positions = state.finalPortfolio.filter(c => c.status === 'passed');
+
+      if (positions.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div>No positions passed all gates</div>';
+        return;
+      }
+
+      positions.sort((a, b) => b.weight - a.weight);
+
+      let html = `
+        <table class="portfolio-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Name</th>
+              <th>Sector</th>
+              <th>Composite</th>
+              <th>Weight</th>
+              <th class="weight-bar-cell"></th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const p of positions) {
+        html += `
+          <tr>
+            <td class="ticker-cell">${p.ticker}</td>
+            <td>${p.name}</td>
+            <td>${p.sector}</td>
+            <td>${p.composite.toFixed(1)}</td>
+            <td>${p.weight.toFixed(1)}%</td>
+            <td class="weight-bar-cell"><div class="weight-bar" style="width: ${p.weight * 5}px;"></div></td>
+          </tr>
+        `;
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // ========== PIPELINE STAGES ==========
+
+    function generateUniverse(size) {
+      const shuffled = shuffle(STOCK_DATA);
+      return shuffled.slice(0, Math.min(size, shuffled.length)).map(s => ({
+        ...s,
+        status: 'pending'
+      }));
+    }
+
+    function applyEligibilityFilters(candidates, gating) {
+      const thresholds = {
+        relaxed: { liquidity: 'low', data: 'low', minCap: 1 },
+        flexible: { liquidity: 'med', data: 'med', minCap: 10 },
+        conservative: { liquidity: 'high', data: 'high', minCap: 50 },
+        strict: { liquidity: 'high', data: 'high', minCap: 100 }
+      };
+      const t = thresholds[gating];
+      const liquidityOrder = ['low', 'med', 'high'];
+      const dataOrder = ['low', 'med', 'high'];
+
+      const results = [];
+
+      for (const c of candidates) {
+        const copy = { ...c };
+        let failed = false;
+        let reason = '';
+
+        // Liquidity check
+        if (liquidityOrder.indexOf(c.liquidity) < liquidityOrder.indexOf(t.liquidity)) {
+          failed = true;
+          reason = `Liquidity (${c.liquidity}) below threshold (${t.liquidity})`;
+        }
+
+        // Data quality check
+        if (!failed && dataOrder.indexOf(c.dataQuality) < dataOrder.indexOf(t.data)) {
+          failed = true;
+          reason = `Data quality (${c.dataQuality}) below threshold (${t.data})`;
+        }
+
+        // Market cap check
+        if (!failed && c.marketCap < t.minCap) {
+          failed = true;
+          reason = `Market cap ($${c.marketCap}B) below $${t.minCap}B`;
+        }
+
+        // Volatility check (stricter modes reject high vol)
+        if (!failed && gating === 'strict' && c.volatility > 0.40) {
+          failed = true;
+          reason = `Volatility (${(c.volatility * 100).toFixed(0)}%) too high`;
+        }
+
+        copy.status = failed ? 'failed' : 'passed';
+        if (failed) copy.failReason = reason;
+
+        audit('Eligibility', 'Filter Check', { ticker: c.ticker, gating }, { passed: !failed, reason });
+        results.push(copy);
+      }
+
+      return results;
+    }
+
+    function applyMultiAgentScoring(candidates, preset, sentimentCapVal) {
+      const weights = { ...PRESETS[preset] };
+
+      // Apply sentiment cap
+      const originalSentiment = weights.Sentiment;
+      weights.Sentiment = Math.min(weights.Sentiment, sentimentCapVal);
+      const excess = originalSentiment - weights.Sentiment;
+      if (excess > 0) {
+        const otherKeys = ['Value', 'Growth', 'Macro', 'Risk'];
+        const otherSum = otherKeys.reduce((s, k) => s + weights[k], 0);
+        for (const k of otherKeys) {
+          weights[k] += (weights[k] / otherSum) * excess;
+        }
+      }
+
+      const results = [];
+
+      for (const c of candidates) {
+        if (c.status === 'failed') {
+          results.push(c);
+          continue;
+        }
+
+        const copy = { ...c };
+
+        // Generate scores based on characteristics
+        const seed = c.ticker.charCodeAt(0) * 17 + c.ticker.charCodeAt(c.ticker.length - 1) * 31;
+
+        // Value: lower volatility, higher market cap = better
+        const valueBase = Math.min(85, 40 + (c.marketCap / 50) + (1 - c.volatility) * 40);
+
+        // Growth: tech sector bonus, higher beta = opportunity
+        const growthBase = c.sector === 'Technology' ? 65 : c.sector === 'Healthcare' ? 55 : 50;
+        const growthBonus = c.beta > 1.2 ? 10 : 0;
+
+        // Macro: larger caps more stable
+        const macroBase = Math.min(80, 35 + (c.marketCap / 40));
+
+        // Risk: low volatility, high liquidity = better risk profile
+        const riskBase = Math.min(90, 30 + (1 - c.volatility) * 50 + (c.liquidity === 'high' ? 15 : 0));
+
+        // Sentiment: pseudo-random with some sector bias
+        const sentBase = ((seed * 7) % 45) + 35 + (c.sector === 'Technology' ? 8 : 0);
+
+        copy.scores = {
+          Val: Math.min(95, Math.max(25, Math.round(valueBase + randomBetween(-8, 8)))),
+          Gro: Math.min(95, Math.max(25, Math.round(growthBase + growthBonus + randomBetween(-10, 10)))),
+          Mac: Math.min(95, Math.max(25, Math.round(macroBase + randomBetween(-8, 8)))),
+          Rsk: Math.min(95, Math.max(25, Math.round(riskBase + randomBetween(-8, 8)))),
+          Sen: Math.min(95, Math.max(25, Math.round(sentBase + randomBetween(-12, 12))))
+        };
+
+        // Compute composite
+        const totalWeight = weights.Value + weights.Growth + weights.Macro + weights.Risk + weights.Sentiment;
+        copy.composite = (
+          copy.scores.Val * weights.Value +
+          copy.scores.Gro * weights.Growth +
+          copy.scores.Mac * weights.Macro +
+          copy.scores.Rsk * weights.Risk +
+          copy.scores.Sen * weights.Sentiment
+        ) / totalWeight;
+
+        copy.status = 'passed';
+
+        audit('Scoring', 'Agent Evaluation', { ticker: c.ticker, scores: copy.scores }, { composite: copy.composite });
+        results.push(copy);
+      }
+
+      // Sort by composite
+      results.sort((a, b) => {
+        if (a.status === 'failed') return 1;
+        if (b.status === 'failed') return -1;
+        return (b.composite || 0) - (a.composite || 0);
+      });
+
+      return results;
+    }
+
+    function applyPortfolioFitGates(candidates, params) {
+      const { maxPosition, maxSector, minComposite, maxPositions } = params;
+      const passed = candidates.filter(c => c.status === 'passed');
+      const alreadyFailed = candidates.filter(c => c.status === 'failed');
+
+      const results = [];
+      const sectorWeights = {};
+      let positionCount = 0;
+
+      for (const c of passed) {
+        const copy = { ...c };
+        let failed = false;
+        let reason = '';
+
+        // Composite threshold
+        if (copy.composite < minComposite) {
+          failed = true;
+          reason = `Composite (${copy.composite.toFixed(1)}) below threshold (${minComposite})`;
+        }
+
+        // Max positions
+        if (!failed && positionCount >= maxPositions) {
+          failed = true;
+          reason = `Max positions (${maxPositions}) reached`;
+        }
+
+        // Sector concentration (check projected weight)
+        if (!failed) {
+          const currentSectorPct = sectorWeights[copy.sector] || 0;
+          // Estimate weight this position would take
+          const estimatedWeight = maxPosition; // conservative estimate
+          if (currentSectorPct + estimatedWeight > maxSector) {
+            failed = true;
+            reason = `Sector (${copy.sector}) would exceed ${maxSector}% limit`;
+          }
+        }
+
+        copy.status = failed ? 'failed' : 'passed';
+        if (failed) {
+          copy.failReason = reason;
+        } else {
+          copy.rawWeight = copy.composite;
+          positionCount++;
+          sectorWeights[copy.sector] = (sectorWeights[copy.sector] || 0) + maxPosition;
+        }
+
+        audit('Portfolio Gates', 'Fit Check', { ticker: c.ticker }, { passed: !failed, reason });
+        results.push(copy);
+      }
+
+      // Calculate weights
+      const finalPassed = results.filter(r => r.status === 'passed');
+      const totalRaw = finalPassed.reduce((s, r) => s + r.rawWeight, 0);
+
+      for (const r of finalPassed) {
+        r.weight = (r.rawWeight / totalRaw) * 100;
+        if (r.weight > maxPosition) {
+          r.weight = maxPosition;
+        }
+      }
+
+      // Re-normalize
+      const weightSum = finalPassed.reduce((s, r) => s + r.weight, 0);
+      if (weightSum > 0) {
+        const scale = 100 / weightSum;
+        for (const r of finalPassed) {
+          r.weight = r.weight * scale;
+        }
+      }
+
+      return [...results, ...alreadyFailed];
+    }
+
+    // ========== SIMULATION EXECUTION ==========
+
+    async function runFullSimulation() {
+      if (state.running) return;
+      state.running = true;
+      runBtn.disabled = true;
+
+      clearLog();
+      resetState();
+
+      const params = getParams();
+      state.auditLog = [];
+
+      log(`<span class="action">Starting simulation</span> | Preset: <span class="detail">${PRESETS[params.preset].label}</span> | Universe: <span class="detail">${params.universeSize}</span>`, 'action');
+      audit('System', 'Simulation Started', params, {});
+
+      // Stage 1
+      setProgress(10);
+      setStageState('stage1', 'active', 'Running...');
+      scrollToElement($('#stage1'));
+      log(`<span class="stage-tag">[Stage 1]</span> Generating universe of ${params.universeSize} candidates...`, 'info');
+      await delay();
+
+      state.universe = generateUniverse(params.universeSize);
+      $('#stage1Candidates').innerHTML = state.universe.map(c => renderCandidate(c)).join('');
+      updateLiveStats();
+      await delay(400);
+
+      setStageState('stage1', 'complete', `${state.universe.length} generated`);
+      log(`<span class="stage-tag">[Stage 1]</span> <span class="pass">✓ Universe created:</span> ${state.universe.length} candidates`, 'pass');
+      audit('Universe', 'Generation Complete', {}, { count: state.universe.length });
+
+      // Stage 2
+      setProgress(30);
+      setStageState('stage2', 'active', 'Running...');
+      scrollToElement($('#stage2'));
+      log(`<span class="stage-tag">[Stage 2]</span> Applying eligibility filters (${params.gating})...`, 'info');
+      await delay();
+
+      state.afterEligibility = applyEligibilityFilters(state.universe, params.gating);
+      const eligPassed = state.afterEligibility.filter(c => c.status === 'passed').length;
+      const eligFailed = state.afterEligibility.filter(c => c.status === 'failed').length;
+
+      $('#stage2Candidates').innerHTML = state.afterEligibility.map(c => renderCandidate(c)).join('');
+      updateLiveStats();
+
+      setStageState('stage2', 'complete', `${eligPassed} passed, ${eligFailed} filtered`);
+      log(`<span class="stage-tag">[Stage 2]</span> <span class="pass">${eligPassed} passed</span> | <span class="fail">${eligFailed} filtered out</span>`, 'pass');
+
+      // Stage 3
+      setProgress(55);
+      setStageState('stage3', 'active', 'Running...');
+      scrollToElement($('#stage3'));
+      log(`<span class="stage-tag">[Stage 3]</span> Running multi-agent scoring (cap: ${params.sentimentCap}%)...`, 'info');
+      await delay();
+
+      state.afterScoring = applyMultiAgentScoring(state.afterEligibility, params.preset, params.sentimentCap);
+      const scoredCount = state.afterScoring.filter(c => c.status === 'passed').length;
+
+      $('#stage3Candidates').innerHTML = state.afterScoring.map(c => renderCandidate(c, { showScores: true, showAgentBars: true, showComposite: true })).join('');
+      updateLiveStats();
+
+      const topScorer = state.afterScoring.find(c => c.status === 'passed');
+      setStageState('stage3', 'complete', `${scoredCount} scored`);
+      log(`<span class="stage-tag">[Stage 3]</span> <span class="pass">✓ Scoring complete</span> | Top: <span class="detail">${topScorer?.ticker} (${topScorer?.composite.toFixed(1)})</span>`, 'pass');
+
+      // Stage 4
+      setProgress(80);
+      setStageState('stage4', 'active', 'Running...');
+      scrollToElement($('#stage4'));
+      log(`<span class="stage-tag">[Stage 4]</span> Applying portfolio gates (max pos: ${params.maxPosition}%)...`, 'info');
+      await delay();
+
+      state.afterGates = applyPortfolioFitGates(state.afterScoring, params);
+      state.finalPortfolio = state.afterGates;
+      const finalCount = state.finalPortfolio.filter(c => c.status === 'passed').length;
+
+      $('#stage4Candidates').innerHTML = state.afterGates.map(c => renderCandidate(c, { showScores: true, showAgentBars: true, showComposite: true })).join('');
+      updateLiveStats();
+
+      setStageState('stage4', 'complete', `${finalCount} approved`);
+      log(`<span class="stage-tag">[Stage 4]</span> <span class="pass">✓ ${finalCount} positions</span> passed all gates`, 'pass');
+
+      // Final
+      setProgress(100);
+      setStageState('stageFinal', 'complete', `${finalCount} positions`);
+      scrollToElement($('#stageFinal'));
+      await delay(300);
+      renderFinalPortfolio();
+      renderSectorBreakdown();
+      renderRiskMetrics();
+
+      log(`<span class="action">Pipeline complete.</span> Final portfolio: <span class="detail">${finalCount} positions</span>`, 'action');
+      audit('System', 'Simulation Complete', {}, { finalPositions: finalCount });
+
+      state.running = false;
+      state.simulationComplete = true;
+      runBtn.disabled = false;
+      runStressBtn.disabled = false;
+      downloadAuditBtn.disabled = false;
+    }
+
+    async function stepThrough() {
+      if (state.running) return;
+
+      const params = getParams();
+      state.currentStep++;
+
+      if (state.currentStep === 1) {
+        clearLog();
+        state.auditLog = [];
+        log(`<span class="action">Step mode:</span> Advancing one stage at a time`, 'action');
+        setStageState('stage1', 'active', 'Running...');
+        state.universe = generateUniverse(params.universeSize);
+        $('#stage1Candidates').innerHTML = state.universe.map(c => renderCandidate(c)).join('');
+        updateLiveStats();
+        setStageState('stage1', 'complete', `${state.universe.length} generated`);
+        setProgress(25);
+      } else if (state.currentStep === 2) {
+        setStageState('stage2', 'active', 'Running...');
+        state.afterEligibility = applyEligibilityFilters(state.universe, params.gating);
+        $('#stage2Candidates').innerHTML = state.afterEligibility.map(c => renderCandidate(c)).join('');
+        updateLiveStats();
+        const count = state.afterEligibility.filter(c => c.status === 'passed').length;
+        setStageState('stage2', 'complete', `${count} passed`);
+        setProgress(50);
+      } else if (state.currentStep === 3) {
+        setStageState('stage3', 'active', 'Running...');
+        state.afterScoring = applyMultiAgentScoring(state.afterEligibility, params.preset, params.sentimentCap);
+        $('#stage3Candidates').innerHTML = state.afterScoring.map(c => renderCandidate(c, { showAgentBars: true, showComposite: true })).join('');
+        updateLiveStats();
+        const count = state.afterScoring.filter(c => c.status === 'passed').length;
+        setStageState('stage3', 'complete', `${count} scored`);
+        setProgress(75);
+      } else if (state.currentStep === 4) {
+        setStageState('stage4', 'active', 'Running...');
+        state.afterGates = applyPortfolioFitGates(state.afterScoring, params);
+        state.finalPortfolio = state.afterGates;
+        $('#stage4Candidates').innerHTML = state.afterGates.map(c => renderCandidate(c, { showAgentBars: true, showComposite: true })).join('');
+        updateLiveStats();
+        const count = state.finalPortfolio.filter(c => c.status === 'passed').length;
+        setStageState('stage4', 'complete', `${count} approved`);
+        setProgress(90);
+      } else if (state.currentStep === 5) {
+        setStageState('stageFinal', 'complete', 'Complete');
+        renderFinalPortfolio();
+        renderSectorBreakdown();
+        renderRiskMetrics();
+        setProgress(100);
+        state.currentStep = 0;
+        state.simulationComplete = true;
+        runStressBtn.disabled = false;
+        downloadAuditBtn.disabled = false;
+      }
+    }
+
+    function resetState() {
+      state.currentStep = 0;
+      state.universe = [];
+      state.afterEligibility = [];
+      state.afterScoring = [];
+      state.afterGates = [];
+      state.finalPortfolio = [];
+      state.simulationComplete = false;
+      state.auditLog = [];
+
+      setProgress(0);
+
+      ['stage1', 'stage2', 'stage3', 'stage4', 'stageFinal'].forEach(id => {
+        setStageState(id, 'inactive', 'Pending');
+      });
+
+      $('#stage1Candidates').innerHTML = '<div class="empty-state"><div class="icon">📊</div>Click "Run Full Simulation" to generate universe</div>';
+      $('#stage2Candidates').innerHTML = '<div class="empty-state"><div class="icon">🔍</div>Waiting for Stage 1...</div>';
+      $('#stage3Candidates').innerHTML = '<div class="empty-state"><div class="icon">🤖</div>Waiting for Stage 2...</div>';
+      $('#stage4Candidates').innerHTML = '<div class="empty-state"><div class="icon">⚖️</div>Waiting for Stage 3...</div>';
+      $('#portfolioOutput').innerHTML = '<div class="empty-state"><div class="icon">📁</div>Waiting for pipeline to complete...</div>';
+
+      $('#sectorBreakdown').innerHTML = '<div class="empty-state" style="padding: 20px;">Run simulation to see allocation</div>';
+
+      $('#statUniverse').textContent = '—';
+      $('#statEligible').textContent = '—';
+      $('#statScored').textContent = '—';
+      $('#statFinal').textContent = '—';
+
+      $('#riskConcentration').textContent = '—';
+      $('#riskConcentration').className = 'value';
+      $('#riskDiversity').textContent = '—';
+      $('#riskDiversity').className = 'value';
+      $('#riskAvgScore').textContent = '—';
+      $('#riskAvgScore').className = 'value';
+      $('#riskTopWeight').textContent = '—';
+      $('#riskTopWeight').className = 'value';
+
+      runStressBtn.disabled = true;
+      downloadAuditBtn.disabled = true;
+    }
+
+    // ========== COMPARISON ==========
+
+    async function runComparison() {
+      const container = $('#comparisonResults');
+      container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Running comparison...</div>';
+
+      const baseUniverse = generateUniverse(22);
+      const results = [];
+
+      for (const [key, preset] of Object.entries(PRESETS)) {
+        if (key === 'custom') continue;
+
+        const eligible = applyEligibilityFilters([...baseUniverse.map(u => ({...u}))], 'flexible');
+        const scored = applyMultiAgentScoring(eligible, key, 10);
+        const final = applyPortfolioFitGates(scored, { maxPosition: 8, maxSector: 30, minComposite: 50, maxPositions: 12 });
+
+        const positions = final.filter(c => c.status === 'passed');
+        const avgComposite = positions.length > 0 ? positions.reduce((s, p) => s + p.composite, 0) / positions.length : 0;
+        const sectors = new Set(positions.map(p => p.sector)).size;
+
+        results.push({
+          key,
+          label: preset.label,
+          positions: positions.length,
+          avgComposite,
+          sectors,
+          topWeight: positions.length > 0 ? Math.max(...positions.map(p => p.weight)) : 0
+        });
+      }
+
+      // Determine winner (most positions with good avg composite)
+      results.sort((a, b) => {
+        const scoreA = a.positions * 10 + a.avgComposite;
+        const scoreB = b.positions * 10 + b.avgComposite;
+        return scoreB - scoreA;
+      });
+      const winner = results[0]?.key;
+
+      let html = '';
+      for (const r of results) {
+        const isWinner = r.key === winner;
+        html += `<div class="comparison-card ${isWinner ? 'winner' : ''}">`;
+        html += `<div class="header">${r.label}${isWinner ? '<span class="badge">Best Fit</span>' : ''}</div>`;
+        html += `<div class="body">`;
+        html += `<div class="stats-grid">`;
+        html += `<div class="stat-item"><div class="value">${r.positions}</div><div class="label">Positions</div></div>`;
+        html += `<div class="stat-item"><div class="value">${r.avgComposite.toFixed(1)}</div><div class="label">Avg Score</div></div>`;
+        html += `<div class="stat-item"><div class="value">${r.sectors}</div><div class="label">Sectors</div></div>`;
+        html += `<div class="stat-item"><div class="value">${r.topWeight.toFixed(1)}%</div><div class="label">Top Weight</div></div>`;
+        html += `</div></div></div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ========== STRESS TEST ==========
+
+    function runStressTest() {
+      const container = $('#stressResults');
+      const positions = state.finalPortfolio.filter(c => c.status === 'passed');
+
+      if (positions.length === 0) {
+        container.innerHTML = '<div class="empty-state">No portfolio to stress test</div>';
+        return;
+      }
+
+      // Calculate weighted portfolio metrics
+      const avgBeta = positions.reduce((s, p) => s + p.beta * (p.weight / 100), 0);
+      const avgVol = positions.reduce((s, p) => s + p.volatility * (p.weight / 100), 0);
+
+      const scenarios = [
+        { name: 'Market Rally (+10%)', impact: avgBeta * 10, type: 'positive' },
+        { name: 'Market Crash (-15%)', impact: avgBeta * -15, type: 'negative' },
+        { name: 'Tech Sector Correction (-20%)', impact: calculateSectorImpact(positions, 'Technology', -20), type: 'negative' },
+        { name: 'Rate Hike Shock', impact: avgBeta * -5 - 2, type: 'negative' },
+        { name: 'Flight to Quality', impact: (1 - avgBeta) * 5, type: avgBeta < 1 ? 'positive' : 'neutral' },
+        { name: 'Volatility Spike (VIX +50%)', impact: -avgVol * 25, type: 'negative' },
+        { name: 'Economic Expansion', impact: avgBeta * 8, type: 'positive' },
+        { name: 'Energy Crisis', impact: calculateSectorImpact(positions, 'Energy', 15) + calculateSectorImpact(positions, 'Technology', -5), type: 'neutral' }
+      ];
+
+      let html = '';
+      for (const s of scenarios) {
+        const impactClass = s.impact > 2 ? 'positive' : s.impact < -2 ? 'negative' : 'neutral';
+        const sign = s.impact > 0 ? '+' : '';
+        html += `<div class="scenario">`;
+        html += `<span class="name">${s.name}</span>`;
+        html += `<span class="impact ${impactClass}">${sign}${s.impact.toFixed(1)}%</span>`;
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function calculateSectorImpact(positions, sector, move) {
+      const sectorWeight = positions
+        .filter(p => p.sector === sector)
+        .reduce((s, p) => s + p.weight, 0);
+      return (sectorWeight / 100) * move;
+    }
+
+    // ========== AUDIT TRAIL ==========
+
+    function renderAuditTrail() {
+      const container = $('#auditTrail');
+
+      if (state.auditLog.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📋</div>No audit entries yet</div>';
+        return;
+      }
+
+      let html = '<table class="portfolio-table"><thead><tr><th>Timestamp</th><th>Stage</th><th>Action</th><th>Details</th><th>Result</th></tr></thead><tbody>';
+
+      for (const entry of state.auditLog.slice(-50)) {
+        const time = new Date(entry.timestamp).toLocaleTimeString();
+        html += `<tr>`;
+        html += `<td>${time}</td>`;
+        html += `<td>${entry.stage}</td>`;
+        html += `<td>${entry.action}</td>`;
+        html += `<td style="font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${JSON.stringify(entry.details)}</td>`;
+        html += `<td style="font-size: 11px;">${JSON.stringify(entry.result)}</td>`;
+        html += `</tr>`;
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function downloadAudit() {
+      const data = {
+        timestamp: new Date().toISOString(),
+        parameters: getParams(),
+        auditLog: state.auditLog,
+        finalPortfolio: state.finalPortfolio.filter(c => c.status === 'passed').map(p => ({
+          ticker: p.ticker,
+          name: p.name,
+          sector: p.sector,
+          composite: p.composite,
+          weight: p.weight,
+          scores: p.scores
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `portfolio-audit-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportResults() {
+      const positions = state.finalPortfolio.filter(c => c.status === 'passed');
+      const csv = [
+        'Ticker,Name,Sector,Composite,Weight',
+        ...positions.map(p => `${p.ticker},"${p.name}",${p.sector},${p.composite.toFixed(2)},${p.weight.toFixed(2)}`)
+      ].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `portfolio-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ========== TABS ==========
+
+    function setupTabs() {
+      $$('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          $$('.tab').forEach(t => t.classList.remove('active'));
+          $$('.tab-panel').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          $(`#tab-${tab.dataset.tab}`).classList.add('active');
+
+          if (tab.dataset.tab === 'audit') {
+            renderAuditTrail();
+          }
+        });
+      });
+    }
+
+    // ========== EVENT HANDLERS ==========
+
+    function updateRangeDisplays() {
+      sentimentCapVal.textContent = sentimentCap.value;
+      maxPositionVal.textContent = maxPosition.value;
+    }
+
+    sentimentCap.addEventListener('input', updateRangeDisplays);
+    maxPosition.addEventListener('input', updateRangeDisplays);
+
+    runBtn.addEventListener('click', runFullSimulation);
+    resetBtn.addEventListener('click', () => {
+      resetState();
+      clearLog();
+      log(`<span class="action">Reset complete.</span> Ready for new simulation.`, 'action');
+    });
+    clearLogBtn.addEventListener('click', clearLog);
+    runComparisonBtn.addEventListener('click', runComparison);
+    runStressBtn.addEventListener('click', runStressTest);
+    downloadAuditBtn.addEventListener('click', downloadAudit);
+
+    // Initialize
+    setupTabs();
+    updateRangeDisplays();
+
+  })();
+  </script>
+</body>
+</html>
